@@ -15,8 +15,9 @@ import (
 	tsed25519 "gitlab.com/unit410/threshold-ed25519/pkg"
 )
 
-// LocalSoftsignThresholdEd25519Signature implements the interface and signs the message for each local signer.
-// LocalSoftSignThresholdEd25519Signature is the implementation of a soft sign signer at the local level.
+// LocalSoftsignThresholdEd25519Signature implements the ThresholdEd25519Signature interface
+// and signs the message for each local signer.
+// LocalSoftSignThresholdEd25519Signature is the implementation of a "software signer" at the local level.
 type LocalSoftSignThresholdEd25519Signature struct {
 	PubKeyBytes []byte
 	Key         CosignerKey
@@ -28,20 +29,8 @@ type LocalSoftSignThresholdEd25519Signature struct {
 	HrsMeta map[HRSTKey]HrsMetadata
 }
 
-// Inistiates the LocalSoftSignThresholdEd25519SignatureConfig struct.
-func NewLocalSoftSignThresholdEd25519SignatureConfig(
-	cfg SignerTypeConfig) LocalSoftSignThresholdEd25519SignatureConfig {
-	localsignerconfig := LocalSoftSignThresholdEd25519SignatureConfig{
-		CosignerKey: cfg.CosignerKey,
-		RsaKey:      cfg.RsaKey,
-		Total:       cfg.Total,
-		Threshold:   cfg.Threshold,
-	}
-	return localsignerconfig
-}
-
 // Holds the configuration of the Local soft signer.
-type LocalSoftSignThresholdEd25519SignatureConfig struct {
+type SoftSignThresholdEd25519Config struct {
 	CosignerKey CosignerKey
 	RsaKey      rsa.PrivateKey
 	RaftAddress string
@@ -50,7 +39,7 @@ type LocalSoftSignThresholdEd25519SignatureConfig struct {
 }
 
 // Implements ThresholdEd25519SignatureConfig interface from threshold_ed25519_signer.go to create a new local signer.
-func (cfg *LocalSoftSignThresholdEd25519SignatureConfig) NewThresholdEd25519Signature() ThresholdEd25519Signature {
+func (cfg SoftSignThresholdEd25519Config) NewThresholdEd25519Signature() ThresholdEd25519Signature {
 	localsigner := &LocalSoftSignThresholdEd25519Signature{
 		Key:       cfg.CosignerKey,
 		RsaKey:    cfg.RsaKey,

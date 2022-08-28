@@ -133,6 +133,7 @@ func StartCosignerCmd() *cobra.Command {
 				ListenAddress:     config.Config.CosignerConfig.P2PListen,
 				Nodes:             config.Config.Nodes(),
 				Cosigners:         config.Config.CosignerPeers(),
+				SignerType:        "SoftSign",
 				// TODO: Potentially add signer type here so we can "automatically "
 				// call correct signer to create.
 				// Maybe should hard code it as well for the moment being?
@@ -146,7 +147,8 @@ func StartCosignerCmd() *cobra.Command {
 			}
 
 			logger.Info("Tendermint Validator", "mode", cfg.Mode,
-				"priv-key", cfg.PrivValKeyFile, "priv-state-dir", cfg.PrivValStateDir)
+				"priv-key", cfg.PrivValKeyFile, "priv-state-dir", cfg.PrivValStateDir,
+				"signer-type", cfg.SignerType)
 
 			var val types.PrivValidator
 
@@ -198,15 +200,19 @@ func StartCosignerCmd() *cobra.Command {
 				Peers:     peers,
 				Address:   cfg.ListenAddress,
 			}
+
 			localsignerConfig := signer.SignerTypeConfig{
-				Total:       uint8(total),
-				CosignerKey: key,
-				RsaKey:      key.RSAKey,
-				Threshold:   uint8(cfg.CosignerThreshold),
+				SignerType: cfg.SignerType,
+				SignerConfig: signer.SoftSignThresholdEd25519Config{
+					CosignerKey: key,
+					RsaKey:      key.RSAKey,
+					Total:       uint8(total),
+					Threshold:   uint8(cfg.CosignerThreshold),
+				},
 			}
 
 			// Initialize the localsigner (ThresholdEdSignature) of choice.
-			localsigner := signer.NewLocalSigner(cfg.ThresholdSigner, localsignerConfig)
+			localsigner := signer.NewLocalSigner(localsignerConfig)
 			// Initialize the localCosigner. The localCosigner "embeds" the local signer
 			localCosigner := signer.NewLocalCosigner(localCosignerConfig, localsigner)
 

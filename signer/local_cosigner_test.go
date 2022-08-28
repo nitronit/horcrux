@@ -44,11 +44,14 @@ func TestLocalCosignerGetID(t *testing.T) {
 		}},
 	}
 	signerConfig := SignerTypeConfig{
-		CosignerKey: key,
-		RsaKey:      *rsaKey,
+		signerType: SignerType,
+		signerConfig: SoftSignThresholdEd25519Config{
+			CosignerKey: key,
+			RsaKey:      *rsaKey,
+		},
 	}
 
-	localsigner := NewLocalSigner(SignerType, signerConfig)
+	localsigner := NewLocalSigner(signerConfig)
 	cosigner := NewLocalCosigner(cosignerConfig, localsigner)
 	require.Equal(t, cosigner.GetID(), 1)
 }
@@ -106,10 +109,13 @@ func TestLocalCosignerSign2of2(t *testing.T) {
 	require.NoError(t, err)
 
 	signerTypeConfig1 := SignerTypeConfig{
-		CosignerKey: key1,
-		RsaKey:      *rsaKey1,
-		Total:       total,
-		Threshold:   threshold,
+		signerType: SignerType,
+		signerConfig: SoftSignThresholdEd25519Config{
+			CosignerKey: key1,
+			RsaKey:      *rsaKey1,
+			Total:       total,
+			Threshold:   threshold,
+		},
 	}
 	cosignerConfig1 := LocalCosignerConfig{
 		SignState: &signState1,
@@ -117,11 +123,16 @@ func TestLocalCosignerSign2of2(t *testing.T) {
 	}
 
 	signerTypeConfig2 := SignerTypeConfig{
-		CosignerKey: key2,
-		RsaKey:      *rsaKey2,
-		Total:       total,
-		Threshold:   threshold,
+		signerType: SignerType,
+		signerConfig: SoftSignThresholdEd25519Config{
+
+			CosignerKey: key2,
+			RsaKey:      *rsaKey2,
+			Total:       total,
+			Threshold:   threshold,
+		},
 	}
+
 	cosignerConfig2 := LocalCosignerConfig{
 		SignState: &signState2,
 		Peers:     peers,
@@ -130,10 +141,10 @@ func TestLocalCosignerSign2of2(t *testing.T) {
 	var cosigner1 Cosigner
 	var cosigner2 Cosigner
 
-	localsigner1 := NewLocalSigner(SignerType, signerTypeConfig1)
+	localsigner1 := NewLocalSigner(signerTypeConfig1)
 	cosigner1 = NewLocalCosigner(cosignerConfig1, localsigner1)
 
-	localsigner2 := NewLocalSigner(SignerType, signerTypeConfig2)
+	localsigner2 := NewLocalSigner(signerTypeConfig2)
 	cosigner2 = NewLocalCosigner(cosignerConfig2, localsigner2)
 
 	require.Equal(t, cosigner1.GetID(), 1)

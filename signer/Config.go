@@ -32,7 +32,7 @@ type Config struct {
 	ListenAddress     string
 	Nodes             []NodeConfig
 	Cosigners         []CosignerConfig
-	ThresholdSigner   string `default:"SoftSign"`
+	SignerType        string `default:"SoftSign"`
 }
 
 func (cfg *Config) KeyFileExists() error {

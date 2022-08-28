@@ -84,21 +84,24 @@ func TestThresholdValidator2of2(t *testing.T) {
 	require.NoError(t, err)
 
 	signerTypeConfig1 := SignerTypeConfig{
-		CosignerKey: key1,
-		RsaKey:      *rsaKey1,
-		Total:       total,
-		Threshold:   threshold,
-	}
+		signerConfig: SoftSignThresholdEd25519Config{
+			CosignerKey: key1,
+			RsaKey:      *rsaKey1,
+			Total:       total,
+			Threshold:   threshold,
+		}}
 	cosignerConfig1 := LocalCosignerConfig{
 		SignState: &signState1,
 		Peers:     peers,
 	}
 
 	signerTypeConfig2 := SignerTypeConfig{
-		CosignerKey: key2,
-		RsaKey:      *rsaKey2,
-		Total:       total,
-		Threshold:   threshold,
+		signerType: SignerType,
+		signerConfig: SoftSignThresholdEd25519Config{
+			CosignerKey: key2,
+			RsaKey:      *rsaKey2,
+			Total:       total,
+			Threshold:   threshold},
 	}
 	cosignerConfig2 := LocalCosignerConfig{
 		SignState: &signState2,
@@ -108,10 +111,10 @@ func TestThresholdValidator2of2(t *testing.T) {
 	var cosigner1 Cosigner
 	var cosigner2 Cosigner
 
-	localsigner1 := NewLocalSigner(SignerType, signerTypeConfig1)
+	localsigner1 := NewLocalSigner(signerTypeConfig1)
 	cosigner1 = NewLocalCosigner(cosignerConfig1, localsigner1)
 
-	localsigner2 := NewLocalSigner(SignerType, signerTypeConfig2)
+	localsigner2 := NewLocalSigner(signerTypeConfig2)
 	cosigner2 = NewLocalCosigner(cosignerConfig2, localsigner2)
 
 	require.Equal(t, cosigner1.GetID(), 1)
@@ -241,33 +244,39 @@ func TestThresholdValidator3of3(t *testing.T) {
 	require.NoError(t, err)
 
 	signerTypeConfig1 := SignerTypeConfig{
-		CosignerKey: key1,
-		RsaKey:      *rsaKey1,
-		Total:       total,
-		Threshold:   threshold,
-	}
+		signerType: SignerType,
+		signerConfig: SoftSignThresholdEd25519Config{
+			CosignerKey: key1,
+			RsaKey:      *rsaKey1,
+			Total:       total,
+			Threshold:   threshold,
+		}}
 	cosignerConfig1 := LocalCosignerConfig{
 		SignState: &signState1,
 		Peers:     peers,
 	}
 
 	signerTypeConfig2 := SignerTypeConfig{
-		CosignerKey: key2,
-		RsaKey:      *rsaKey2,
-		Total:       total,
-		Threshold:   threshold,
-	}
+		signerType: SignerType,
+		signerConfig: SoftSignThresholdEd25519Config{
+			CosignerKey: key2,
+			RsaKey:      *rsaKey2,
+			Total:       total,
+			Threshold:   threshold,
+		}}
 	cosignerConfig2 := LocalCosignerConfig{
 		SignState: &signState2,
 		Peers:     peers,
 	}
 
 	signerTypeConfig3 := SignerTypeConfig{
-		CosignerKey: key3,
-		RsaKey:      *rsaKey3,
-		Total:       total,
-		Threshold:   threshold,
-	}
+		signerType: SignerType,
+		signerConfig: SoftSignThresholdEd25519Config{
+			CosignerKey: key3,
+			RsaKey:      *rsaKey3,
+			Total:       total,
+			Threshold:   threshold,
+		}}
 	cosignerConfig3 := LocalCosignerConfig{
 		SignState: &signState3,
 		Peers:     peers,
@@ -276,13 +285,13 @@ func TestThresholdValidator3of3(t *testing.T) {
 	var cosigner2 Cosigner
 	var cosigner3 Cosigner
 
-	localsigner1 := NewLocalSigner(SignerType, signerTypeConfig1)
+	localsigner1 := NewLocalSigner(signerTypeConfig1)
 	cosigner1 = NewLocalCosigner(cosignerConfig1, localsigner1)
 
-	localsigner2 := NewLocalSigner(SignerType, signerTypeConfig2)
+	localsigner2 := NewLocalSigner(signerTypeConfig2)
 	cosigner2 = NewLocalCosigner(cosignerConfig2, localsigner2)
 
-	localsigner3 := NewLocalSigner(SignerType, signerTypeConfig3)
+	localsigner3 := NewLocalSigner(signerTypeConfig3)
 	cosigner3 = NewLocalCosigner(cosignerConfig3, localsigner3)
 
 	require.Equal(t, cosigner1.GetID(), 1)
@@ -403,33 +412,39 @@ func TestThresholdValidator2of3(t *testing.T) {
 	require.NoError(t, err)
 
 	signerTypeConfig1 := SignerTypeConfig{
-		CosignerKey: key1,
-		RsaKey:      *rsaKey1,
-		Total:       total,
-		Threshold:   threshold,
-	}
+		signerType: SignerType,
+		signerConfig: SoftSignThresholdEd25519Config{
+			CosignerKey: key1,
+			RsaKey:      *rsaKey1,
+			Total:       total,
+			Threshold:   threshold,
+		}}
 	cosignerConfig1 := LocalCosignerConfig{
 		SignState: &signState1,
 		Peers:     peers,
 	}
 
 	signerTypeConfig2 := SignerTypeConfig{
-		CosignerKey: key2,
-		RsaKey:      *rsaKey2,
-		Total:       total,
-		Threshold:   threshold,
-	}
+		signerType: SignerType,
+		signerConfig: SoftSignThresholdEd25519Config{
+			CosignerKey: key2,
+			RsaKey:      *rsaKey2,
+			Total:       total,
+			Threshold:   threshold,
+		}}
 	cosignerConfig2 := LocalCosignerConfig{
 		SignState: &signState2,
 		Peers:     peers,
 	}
 
 	signerTypeConfig3 := SignerTypeConfig{
-		CosignerKey: key3,
-		RsaKey:      *rsaKey3,
-		Total:       total,
-		Threshold:   threshold,
-	}
+		signerType: SignerType,
+		signerConfig: SoftSignThresholdEd25519Config{
+			CosignerKey: key3,
+			RsaKey:      *rsaKey3,
+			Total:       total,
+			Threshold:   threshold,
+		}}
 	cosignerConfig3 := LocalCosignerConfig{
 		SignState: &signState3,
 		Peers:     peers,
@@ -438,13 +453,13 @@ func TestThresholdValidator2of3(t *testing.T) {
 	var cosigner2 Cosigner
 	var cosigner3 Cosigner
 
-	localsigner1 := NewLocalSigner(SignerType, signerTypeConfig1)
+	localsigner1 := NewLocalSigner(signerTypeConfig1)
 	cosigner1 = NewLocalCosigner(cosignerConfig1, localsigner1)
 
-	localsigner2 := NewLocalSigner(SignerType, signerTypeConfig2)
+	localsigner2 := NewLocalSigner(signerTypeConfig2)
 	cosigner2 = NewLocalCosigner(cosignerConfig2, localsigner2)
 
-	localsigner3 := NewLocalSigner(SignerType, signerTypeConfig3)
+	localsigner3 := NewLocalSigner(signerTypeConfig3)
 	cosigner3 = NewLocalCosigner(cosignerConfig3, localsigner3)
 
 	require.Equal(t, cosigner1.GetID(), 1)
