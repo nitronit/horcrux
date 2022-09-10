@@ -1,5 +1,6 @@
 package signer
 
+/*
 import (
 	"context"
 	"fmt"
@@ -34,6 +35,7 @@ func (rpc *GRPCServer) SignBlock(
 	}, nil
 }
 
+// implements CosignerGRPCServer interface in proto
 func (rpc *GRPCServer) SetEphemeralSecretPartsAndSign(
 	ctx context.Context,
 	req *proto.CosignerGRPCSetEphemeralSecretPartsAndSignRequest,
@@ -53,6 +55,7 @@ func (rpc *GRPCServer) SetEphemeralSecretPartsAndSign(
 	}, nil
 }
 
+// implements CosignerGRPCServer interface in proto
 func (rpc *GRPCServer) GetEphemeralSecretParts(
 	ctx context.Context,
 	req *proto.CosignerGRPCGetEphemeralSecretPartsRequest,
@@ -66,6 +69,7 @@ func (rpc *GRPCServer) GetEphemeralSecretParts(
 	}, nil
 }
 
+// implements CosignerGRPCServer interface in proto
 func (rpc *GRPCServer) TransferLeadership(
 	ctx context.Context,
 	req *proto.CosignerGRPCTransferLeadershipRequest,
@@ -86,3 +90,4 @@ func (rpc *GRPCServer) TransferLeadership(
 	rpc.raftStore.raft.LeadershipTransfer()
 	return &proto.CosignerGRPCTransferLeadershipResponse{}, nil
 }
+*/

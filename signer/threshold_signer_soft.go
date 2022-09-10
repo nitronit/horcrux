@@ -20,8 +20,9 @@ import (
 type ThresholdSignerSoft struct {
 	PubKeyBytes []byte
 	Key         CosignerKey
-	// Total signers
-	Total     uint8
+	// Total number of signers
+	Total uint8
+	// Required threshold
 	Threshold uint8
 	// Height, Round, Step, Timestamp --> metadata
 	HrsMeta map[HRSTKey]HrsMetadata
