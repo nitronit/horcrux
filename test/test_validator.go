@@ -21,7 +21,7 @@ type TestValidator struct {
 	tl            TestLogger
 	Home          string
 	PubKey        crypto.PubKey
-	PrivKeyShares []signer.CosignerKey
+	PrivKeyShares []signer.ThresholdSignerKey
 	Threshold     int
 }
 

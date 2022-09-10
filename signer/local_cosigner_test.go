@@ -18,7 +18,7 @@ import (
 const SignerType = SignerTypeSoftSign
 
 func TestLocalCosignerGetID(t *testing.T) {
-	thresholdSigner := NewThresholdSignerSoft(CosignerKey{ID: 1, PubKey: tmCryptoEd25519.PubKey{}}, 2, 3)
+	thresholdSigner := NewThresholdSignerSoft(ThresholdSignerKey{ID: 1, PubKey: tmCryptoEd25519.PubKey{}}, 2, 3)
 	cosigner := NewLocalCosigner("", nil, nil, thresholdSigner)
 	require.Equal(t, cosigner.GetID(), 1)
 }
@@ -50,7 +50,7 @@ func TestLocalCosignerSign2of2(t *testing.T) {
 	copy(privKeyBytes[:], privateKey[:])
 	secretShares := tsed25519.DealShares(tsed25519.ExpandSecret(privKeyBytes[:32]), threshold, total)
 
-	key1 := CosignerKey{
+	key1 := ThresholdSignerKey{
 		PubKey:   privateKey.PubKey(),
 		RSAKey:   *rsaKey1,
 		ShareKey: secretShares[0],
@@ -64,7 +64,7 @@ func TestLocalCosignerSign2of2(t *testing.T) {
 	signState1, err := LoadOrCreateSignState(stateFile1.Name())
 	require.NoError(t, err)
 
-	key2 := CosignerKey{
+	key2 := ThresholdSignerKey{
 		PubKey:   privateKey.PubKey(),
 		RSAKey:   *rsaKey2,
 		ShareKey: secretShares[1],

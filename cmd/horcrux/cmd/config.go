@@ -551,20 +551,20 @@ func (c *DiskConfig) CosignerPeers() (out []signer.CosignerConfig) {
 	return
 }
 
-func (c *DiskConfig) KeyAndThresholdSigner(logger tmlog.Logger) (signer.CosignerKey, signer.ThresholdSigner, error) {
+func (c *DiskConfig) KeyAndThresholdSigner(logger tmlog.Logger) (signer.ThresholdSignerKey, signer.ThresholdSigner, error) {
 	switch c.CosignerConfig.SignerType {
 	case "hsm", "HSM":
 		logger.Info("Cosigning with HSM")
-		return signer.CosignerKey{}, signer.NewThresholdSignerHSM(), nil
+		return signer.ThresholdSignerKey{}, signer.NewThresholdSignerHSM(), nil
 	default:
 
 		keyFilePath := config.keyFilePath(true)
 		if _, err := os.Stat(keyFilePath); os.IsNotExist(err) {
-			return signer.CosignerKey{}, nil, fmt.Errorf("private key share doesn't exist at path(%s)", keyFilePath)
+			return signer.ThresholdSignerKey{}, nil, fmt.Errorf("private key share doesn't exist at path(%s)", keyFilePath)
 		}
 		key, err := signer.LoadCosignerKey(keyFilePath)
 		if err != nil {
-			return signer.CosignerKey{}, nil, fmt.Errorf("error reading cosigner key: %s", err)
+			return signer.ThresholdSignerKey{}, nil, fmt.Errorf("error reading cosigner key: %s", err)
 		}
 		logger.Info("Cosigning with soft key",
 			"file", keyFilePath,

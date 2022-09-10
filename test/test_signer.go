@@ -29,7 +29,7 @@ type TestSigner struct {
 	ValidatorIndex int
 	Pool           *dockertest.Pool
 	Container      *docker.Container
-	Key            signer.CosignerKey
+	Key            signer.ThresholdSignerKey
 	tl             TestLogger
 }
 
@@ -242,7 +242,7 @@ func MakeTestSigners(validatorIndex, count int, home string, pool *dockertest.Po
 			ValidatorIndex: validatorIndex,
 			Pool:           pool,
 			Container:      nil,
-			Key:            signer.CosignerKey{},
+			Key:            signer.ThresholdSignerKey{},
 			tl:             tl,
 		}
 		out = append(out, ts)

@@ -19,7 +19,7 @@ import (
 // ThresholdSignerSoft is the implementation of a soft sign signer at the local level.
 type ThresholdSignerSoft struct {
 	PubKeyBytes []byte
-	Key         CosignerKey
+	Key         ThresholdSignerKey
 	// Total number of signers
 	Total uint8
 	// Required threshold
@@ -31,7 +31,7 @@ type ThresholdSignerSoft struct {
 // NewThresholdSignerSoft constructs a ThresholdSigner
 // that signs using the local key share file.
 func NewThresholdSignerSoft(
-	key CosignerKey,
+	key ThresholdSignerKey,
 	threshold, total uint8,
 ) ThresholdSigner {
 	softSigner := &ThresholdSignerSoft{

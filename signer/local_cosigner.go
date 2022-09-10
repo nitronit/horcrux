@@ -112,7 +112,7 @@ func (cosigner *LocalCosigner) GetEphemeralSecretParts(
 	return res, nil
 }
 
-// SetEphemeralSecretPartsAndSign
+// SetEphemeralSecretPartsAndSign sets the
 // Implements the Cosigner interface from Cosigner.go
 func (cosigner *LocalCosigner) SetEphemeralSecretPartsAndSign(
 	req CosignerSetEphemeralSecretPartsAndSignRequest) (*CosignerSignResponse, error) {

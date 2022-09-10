@@ -13,27 +13,29 @@ import (
 	tmProtoCrypto "github.com/tendermint/tendermint/proto/tendermint/crypto"
 )
 
-// CosignerKey is a single key for an m-of-n threshold signer.
-type CosignerKey struct {
-	PubKey       tmCrypto.PubKey  `json:"pub_key"`
-	ShareKey     []byte           `json:"secret_share"`
-	RSAKey       rsa.PrivateKey   `json:"rsa_key"`
-	ID           int              `json:"id"`
+// ThresholdSignerKey is a single keyholder for a single(!) m-of-n threshold signer.
+type ThresholdSignerKey struct {
+	PubKey   tmCrypto.PubKey `json:"pub_key"`
+	ShareKey []byte          `json:"secret_share"`
+	// ThresholdSigners private RSA key
+	RSAKey rsa.PrivateKey `json:"rsa_key"`
+	ID     int            `json:"id"`
+	// Co-signers public rsa key
 	CosignerKeys []*rsa.PublicKey `json:"rsa_pubs"`
 }
 
-func (cosignerKey *CosignerKey) MarshalJSON() ([]byte, error) {
-	type Alias CosignerKey
+func (thresholdSignerKey *ThresholdSignerKey) MarshalJSON() ([]byte, error) {
+	type Alias ThresholdSignerKey
 
 	// marshal our private key and all public keys
-	privateBytes := x509.MarshalPKCS1PrivateKey(&cosignerKey.RSAKey)
+	privateBytes := x509.MarshalPKCS1PrivateKey(&thresholdSignerKey.RSAKey)
 	rsaPubKeysBytes := make([][]byte, 0)
-	for _, pubKey := range cosignerKey.CosignerKeys {
+	for _, pubKey := range thresholdSignerKey.CosignerKeys {
 		publicBytes := x509.MarshalPKCS1PublicKey(pubKey)
 		rsaPubKeysBytes = append(rsaPubKeysBytes, publicBytes)
 	}
 
-	protoPubkey, err := tmCryptoEncoding.PubKeyToProto(cosignerKey.PubKey)
+	protoPubkey, err := tmCryptoEncoding.PubKeyToProto(thresholdSignerKey.PubKey)
 	if err != nil {
 		return nil, err
 	}
@@ -52,12 +54,12 @@ func (cosignerKey *CosignerKey) MarshalJSON() ([]byte, error) {
 		Pubkey:       protoBytes,
 		RSAKey:       privateBytes,
 		CosignerKeys: rsaPubKeysBytes,
-		Alias:        (*Alias)(cosignerKey),
+		Alias:        (*Alias)(thresholdSignerKey),
 	})
 }
 
-func (cosignerKey *CosignerKey) UnmarshalJSON(data []byte) error {
-	type Alias CosignerKey
+func (thresholdSignerKey *ThresholdSignerKey) UnmarshalJSON(data []byte) error {
+	type Alias ThresholdSignerKey
 
 	aux := &struct {
 		RSAKey       []byte   `json:"rsa_key"`
@@ -65,7 +67,7 @@ func (cosignerKey *CosignerKey) UnmarshalJSON(data []byte) error {
 		CosignerKeys [][]byte `json:"rsa_pubs"`
 		*Alias
 	}{
-		Alias: (*Alias)(cosignerKey),
+		Alias: (*Alias)(thresholdSignerKey),
 	}
 	if err := json.Unmarshal(data, &aux); err != nil {
 		return err
@@ -103,23 +105,23 @@ func (cosignerKey *CosignerKey) UnmarshalJSON(data []byte) error {
 	}
 
 	// unmarshal the public key bytes for each cosigner
-	cosignerKey.CosignerKeys = make([]*rsa.PublicKey, 0)
+	thresholdSignerKey.CosignerKeys = make([]*rsa.PublicKey, 0)
 	for _, bytes := range aux.CosignerKeys {
 		cosignerRsaPubkey, err := x509.ParsePKCS1PublicKey(bytes)
 		if err != nil {
 			return err
 		}
-		cosignerKey.CosignerKeys = append(cosignerKey.CosignerKeys, cosignerRsaPubkey)
+		thresholdSignerKey.CosignerKeys = append(thresholdSignerKey.CosignerKeys, cosignerRsaPubkey)
 	}
 
-	cosignerKey.RSAKey = *privateKey
-	cosignerKey.PubKey = pubkey
+	thresholdSignerKey.RSAKey = *privateKey
+	thresholdSignerKey.PubKey = pubkey
 	return nil
 }
 
 // LoadCosignerKey loads a CosignerKey from file.
-func LoadCosignerKey(file string) (CosignerKey, error) {
-	pvKey := CosignerKey{}
+func LoadCosignerKey(file string) (ThresholdSignerKey, error) {
+	pvKey := ThresholdSignerKey{}
 	keyJSONBytes, err := os.ReadFile(file)
 	if err != nil {
 		return pvKey, err

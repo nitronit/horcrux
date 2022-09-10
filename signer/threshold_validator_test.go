@@ -57,7 +57,7 @@ func TestThresholdValidator2of2(t *testing.T) {
 	copy(privKeyBytes[:], privateKey[:])
 	secretShares := tsed25519.DealShares(tsed25519.ExpandSecret(privKeyBytes[:32]), threshold, total)
 
-	key1 := CosignerKey{
+	key1 := ThresholdSignerKey{
 		PubKey:   privateKey.PubKey(),
 		RSAKey:   *rsaKey1,
 		ShareKey: secretShares[0],
@@ -71,7 +71,7 @@ func TestThresholdValidator2of2(t *testing.T) {
 	signState1, err := LoadOrCreateSignState(stateFile1.Name())
 	require.NoError(t, err)
 
-	key2 := CosignerKey{
+	key2 := ThresholdSignerKey{
 		PubKey:   privateKey.PubKey(),
 		RSAKey:   *rsaKey2,
 		ShareKey: secretShares[1],
@@ -174,7 +174,7 @@ func TestThresholdValidator3of3(t *testing.T) {
 	copy(privKeyBytes[:], privateKey[:])
 	secretShares := tsed25519.DealShares(tsed25519.ExpandSecret(privKeyBytes[:32]), threshold, total)
 
-	key1 := CosignerKey{
+	key1 := ThresholdSignerKey{
 		PubKey:   privateKey.PubKey(),
 		RSAKey:   *rsaKey1,
 		ShareKey: secretShares[0],
@@ -188,7 +188,7 @@ func TestThresholdValidator3of3(t *testing.T) {
 	signState1, err := LoadOrCreateSignState(stateFile1.Name())
 	require.NoError(t, err)
 
-	key2 := CosignerKey{
+	key2 := ThresholdSignerKey{
 		PubKey:   privateKey.PubKey(),
 		RSAKey:   *rsaKey2,
 		ShareKey: secretShares[1],
@@ -202,7 +202,7 @@ func TestThresholdValidator3of3(t *testing.T) {
 	signState2, err := LoadOrCreateSignState(stateFile2.Name())
 	require.NoError(t, err)
 
-	key3 := CosignerKey{
+	key3 := ThresholdSignerKey{
 		PubKey:   privateKey.PubKey(),
 		RSAKey:   *rsaKey3,
 		ShareKey: secretShares[2],
@@ -299,7 +299,7 @@ func TestThresholdValidator2of3(t *testing.T) {
 	copy(privKeyBytes[:], privateKey[:])
 	secretShares := tsed25519.DealShares(tsed25519.ExpandSecret(privKeyBytes[:32]), threshold, total)
 
-	key1 := CosignerKey{
+	key1 := ThresholdSignerKey{
 		PubKey:   privateKey.PubKey(),
 		RSAKey:   *rsaKey1,
 		ShareKey: secretShares[0],
@@ -313,7 +313,7 @@ func TestThresholdValidator2of3(t *testing.T) {
 	signState1, err := LoadOrCreateSignState(stateFile1.Name())
 	require.NoError(t, err)
 
-	key2 := CosignerKey{
+	key2 := ThresholdSignerKey{
 		PubKey:   privateKey.PubKey(),
 		RSAKey:   *rsaKey2,
 		ShareKey: secretShares[1],
@@ -327,7 +327,7 @@ func TestThresholdValidator2of3(t *testing.T) {
 	signState2, err := LoadOrCreateSignState(stateFile2.Name())
 	require.NoError(t, err)
 
-	key3 := CosignerKey{
+	key3 := ThresholdSignerKey{
 		PubKey:   privateKey.PubKey(),
 		RSAKey:   *rsaKey3,
 		ShareKey: secretShares[2],
