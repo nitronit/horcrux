@@ -14,35 +14,12 @@ import (
 	tsed25519 "gitlab.com/unit410/threshold-ed25519/pkg"
 )
 
+// TODO: Ccheck if this is the corecto way correct?
+const SignerType = SignerTypeSoftSign
+
 func TestLocalCosignerGetID(t *testing.T) {
-	dummyPub := tmCryptoEd25519.PubKey{}
-
-	bitSize := 4096
-	rsaKey, err := rsa.GenerateKey(rand.Reader, bitSize)
-	require.NoError(t, err)
-
-	key := CosignerKey{
-		PubKey:   dummyPub,
-		ShareKey: []byte{},
-		ID:       1,
-	}
-	signState := SignState{
-		Height: 0,
-		Round:  0,
-		Step:   0,
-	}
-
-	config := LocalCosignerConfig{
-		CosignerKey: key,
-		SignState:   &signState,
-		RsaKey:      *rsaKey,
-		Peers: []CosignerPeer{{
-			ID:        1,
-			PublicKey: rsaKey.PublicKey,
-		}},
-	}
-
-	cosigner := NewLocalCosigner(config)
+	thresholdSigner := NewThresholdSignerSoft(CosignerKey{ID: 1, PubKey: tmCryptoEd25519.PubKey{}}, 2, 3)
+	cosigner := NewLocalCosigner("", nil, nil, thresholdSigner)
 	require.Equal(t, cosigner.GetID(), 1)
 }
 
@@ -75,6 +52,7 @@ func TestLocalCosignerSign2of2(t *testing.T) {
 
 	key1 := CosignerKey{
 		PubKey:   privateKey.PubKey(),
+		RSAKey:   *rsaKey1,
 		ShareKey: secretShares[0],
 		ID:       1,
 	}
@@ -88,6 +66,7 @@ func TestLocalCosignerSign2of2(t *testing.T) {
 
 	key2 := CosignerKey{
 		PubKey:   privateKey.PubKey(),
+		RSAKey:   *rsaKey2,
 		ShareKey: secretShares[1],
 		ID:       2,
 	}
@@ -98,32 +77,11 @@ func TestLocalCosignerSign2of2(t *testing.T) {
 	signState2, err := LoadOrCreateSignState(stateFile2.Name())
 	require.NoError(t, err)
 
-	config1 := LocalCosignerConfig{
-		CosignerKey: key1,
-		SignState:   &signState1,
-		RsaKey:      *rsaKey1,
-		Peers:       peers,
-		Total:       total,
-		Threshold:   threshold,
-	}
+	localSigner1 := NewThresholdSignerSoft(key1, threshold, total)
+	cosigner1 := NewLocalCosigner("", peers, &signState1, localSigner1)
 
-	config2 := LocalCosignerConfig{
-		CosignerKey: key2,
-		SignState:   &signState2,
-		RsaKey:      *rsaKey2,
-		Peers:       peers,
-		Total:       total,
-		Threshold:   threshold,
-	}
-
-	var cosigner1 Cosigner
-	var cosigner2 Cosigner
-
-	cosigner1 = NewLocalCosigner(config1)
-	cosigner2 = NewLocalCosigner(config2)
-
-	require.Equal(t, cosigner1.GetID(), 1)
-	require.Equal(t, cosigner2.GetID(), 2)
+	localSigner2 := NewThresholdSignerSoft(key2, threshold, total)
+	cosigner2 := NewLocalCosigner("", peers, &signState2, localSigner2)
 
 	publicKeys := make([]tsed25519.Element, 0)
 
