@@ -30,6 +30,7 @@ import (
 	"github.com/ory/dockertest"
 	"github.com/ory/dockertest/docker"
 	"github.com/strangelove-ventures/horcrux/signer"
+	"github.com/strangelove-ventures/horcrux/signer/thresholdsigner"
 	tmconfig "github.com/tendermint/tendermint/config"
 	tmBytes "github.com/tendermint/tendermint/libs/bytes"
 	"github.com/tendermint/tendermint/p2p"
@@ -907,7 +908,7 @@ func (tn TestNodes) WaitForHeight(height int64) error {
 }
 
 func (tn *TestNode) GetPrivVal() (privval.FilePVKey, error) {
-	return signer.ReadPrivValidatorFile(tn.privValKeyPath())
+	return thresholdsigner.ReadPrivValidatorFile(tn.privValKeyPath())
 }
 
 func (tn *TestNode) privValKeyPath() string {

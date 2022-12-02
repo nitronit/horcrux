@@ -1,4 +1,4 @@
-package signer
+package thresholdsigner
 
 import (
 	tsed25519 "gitlab.com/unit410/threshold-ed25519/pkg"

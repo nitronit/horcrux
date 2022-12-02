@@ -7,10 +7,11 @@ import (
 
 	"github.com/hashicorp/raft"
 	proto "github.com/strangelove-ventures/horcrux/signer/proto"
+	threholdsigner "github.com/strangelove-ventures/horcrux/signer/thresholdsigner"
 )
 
 type GRPCServer struct {
-	cosigner           *LocalCosigner
+	cosigner           *threholdsigner.LocalCosigner
 	thresholdValidator *ThresholdValidator
 	raftStore          *RaftStore
 	proto.UnimplementedCosignerGRPCServer
@@ -38,9 +39,9 @@ func (rpc *GRPCServer) SetEphemeralSecretPartsAndSign(
 	ctx context.Context,
 	req *proto.CosignerGRPCSetEphemeralSecretPartsAndSignRequest,
 ) (*proto.CosignerGRPCSetEphemeralSecretPartsAndSignResponse, error) {
-	res, err := rpc.cosigner.SetEphemeralSecretPartsAndSign(CosignerSetEphemeralSecretPartsAndSignRequest{
-		EncryptedSecrets: CosignerEphemeralSecretPartsFromProto(req.GetEncryptedSecrets()),
-		HRST:             HRSTKeyFromProto(req.GetHrst()),
+	res, err := rpc.cosigner.SetEphemeralSecretPartsAndSign(threholdsigner.CosignerSetEphemeralSecretPartsAndSignRequest{
+		EncryptedSecrets: threholdsigner.CosignerEphemeralSecretPartsFromProto(req.GetEncryptedSecrets()),
+		HRST:             threholdsigner.HRSTKeyFromProto(req.GetHrst()),
 		SignBytes:        req.GetSignBytes(),
 	})
 	if err != nil {
@@ -63,12 +64,12 @@ func (rpc *GRPCServer) GetEphemeralSecretParts(
 	ctx context.Context,
 	req *proto.CosignerGRPCGetEphemeralSecretPartsRequest,
 ) (*proto.CosignerGRPCGetEphemeralSecretPartsResponse, error) {
-	res, err := rpc.cosigner.GetEphemeralSecretParts(HRSTKeyFromProto(req.GetHrst()))
+	res, err := rpc.cosigner.GetEphemeralSecretParts(threholdsigner.HRSTKeyFromProto(req.GetHrst()))
 	if err != nil {
 		return nil, err
 	}
 	return &proto.CosignerGRPCGetEphemeralSecretPartsResponse{
-		EncryptedSecrets: CosignerEphemeralSecretParts(res.EncryptedSecrets).toProto(),
+		EncryptedSecrets: threholdsigner.CosignerEphemeralSecretParts(res.EncryptedSecrets).ToProto(),
 	}, nil
 }
 

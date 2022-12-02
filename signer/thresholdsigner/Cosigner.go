@@ -1,4 +1,4 @@
-package signer
+package thresholdsigner
 
 import (
 	"time"
@@ -103,6 +103,12 @@ func (secretPart *CosignerEphemeralSecretPart) toProto() *proto.EphemeralSecretP
 
 type CosignerEphemeralSecretParts []CosignerEphemeralSecretPart
 
+func (secretParts CosignerEphemeralSecretParts) ToProto() (out []*proto.EphemeralSecretPart) {
+	for _, secretPart := range secretParts {
+		out = append(out, secretPart.toProto())
+	}
+	return
+}
 func (secretParts CosignerEphemeralSecretParts) toProto() (out []*proto.EphemeralSecretPart) {
 	for _, secretPart := range secretParts {
 		out = append(out, secretPart.toProto())
@@ -126,6 +132,35 @@ func CosignerEphemeralSecretPartsFromProto(
 		out = append(out, CosignerEphemeralSecretPartFromProto(secretPart))
 	}
 	return
+}
+
+// Block and toProto is temporary.
+type Block struct {
+	Height    int64
+	Round     int64
+	Step      int8
+	SignBytes []byte
+	Timestamp time.Time
+}
+
+func (block Block) toProto() *proto.Block {
+	return &proto.Block{
+		Height:    block.Height,
+		Round:     block.Round,
+		Step:      int32(block.Step),
+		SignBytes: block.SignBytes,
+		Timestamp: block.Timestamp.UnixNano(),
+	}
+}
+
+func (block Block) ToProto() *proto.Block {
+	return &proto.Block{
+		Height:    block.Height,
+		Round:     block.Round,
+		Step:      int32(block.Step),
+		SignBytes: block.SignBytes,
+		Timestamp: block.Timestamp.UnixNano(),
+	}
 }
 
 type CosignerSetEphemeralSecretPartRequest struct {

@@ -1,4 +1,4 @@
-package signer
+package thresholdsigner
 
 import (
 	"bytes"
@@ -22,6 +22,8 @@ const (
 	stepPrecommit int8 = 3
 	blocksToCache      = 3
 )
+
+const StepPropose int8 = 1
 
 func CanonicalVoteToStep(vote *tmproto.CanonicalVote) int8 {
 	switch vote.Type {
@@ -57,9 +59,9 @@ type SignState struct {
 	EphemeralPublic []byte           `json:"ephemeral_public"`
 	Signature       []byte           `json:"signature,omitempty"`
 	SignBytes       tmbytes.HexBytes `json:"signbytes,omitempty"`
-	cache           map[HRSKey]SignStateConsensus
+	Cache           map[HRSKey]SignStateConsensus
 
-	filePath string
+	FilePath string
 }
 
 type SignStateConsensus struct {
@@ -101,7 +103,7 @@ func (signState *SignState) GetFromCache(hrs HRSKey, lock *sync.Mutex) (HRSKey, 
 		Round:  signState.Round,
 		Step:   signState.Step,
 	}
-	if ssc, ok := signState.cache[hrs]; ok {
+	if ssc, ok := signState.Cache[hrs]; ok {
 		return latestBlock, &ssc
 	}
 	return latestBlock, nil
@@ -121,10 +123,10 @@ func (signState *SignState) Save(ssc SignStateConsensus, lock *sync.Mutex, async
 	}
 	// HRS is greater than existing state, allow
 
-	signState.cache[HRSKey{Height: ssc.Height, Round: ssc.Round, Step: ssc.Step}] = ssc
-	for hrs := range signState.cache {
+	signState.Cache[HRSKey{Height: ssc.Height, Round: ssc.Round, Step: ssc.Step}] = ssc
+	for hrs := range signState.Cache {
 		if hrs.Height < ssc.Height-blocksToCache {
-			delete(signState.cache, hrs)
+			delete(signState.Cache, hrs)
 		}
 	}
 
@@ -146,7 +148,7 @@ func (signState *SignState) Save(ssc SignStateConsensus, lock *sync.Mutex, async
 
 // Save persists the FilePvLastSignState to its filePath.
 func (signState *SignState) save() {
-	outFile := signState.filePath
+	outFile := signState.FilePath
 	if outFile == "none" {
 		return
 	}
@@ -257,15 +259,15 @@ func LoadSignState(filepath string) (SignState, error) {
 	if err != nil {
 		return state, err
 	}
-	state.cache = make(map[HRSKey]SignStateConsensus)
-	state.cache[HRSKey{Height: state.Height, Round: state.Round, Step: state.Step}] = SignStateConsensus{
+	state.Cache = make(map[HRSKey]SignStateConsensus)
+	state.Cache[HRSKey{Height: state.Height, Round: state.Round, Step: state.Step}] = SignStateConsensus{
 		Height:    state.Height,
 		Round:     state.Round,
 		Step:      state.Step,
 		Signature: state.Signature,
 		SignBytes: state.SignBytes,
 	}
-	state.filePath = filepath
+	state.FilePath = filepath
 	return state, nil
 }
 
@@ -281,8 +283,8 @@ func LoadOrCreateSignState(filepath string) (SignState, error) {
 	// There was an error loading the sign state
 	// Make an empty sign state and save it
 	state := SignState{}
-	state.filePath = filepath
-	state.cache = make(map[HRSKey]SignStateConsensus)
+	state.FilePath = filepath
+	state.Cache = make(map[HRSKey]SignStateConsensus)
 	state.save()
 	return state, nil
 }

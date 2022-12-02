@@ -4,6 +4,8 @@ import (
 	"os"
 	"testing"
 	"time"
+
+	thresholdsigner "github.com/strangelove-ventures/horcrux/signer/thresholdsigner"
 )
 
 // Test_StoreInMemOpenSingleNode tests that a command can be applied to the log
@@ -19,8 +21,8 @@ func Test_StoreInMemOpenSingleNode(t *testing.T) {
 		RaftTimeout: 1 * time.Second,
 		m:           make(map[string]string),
 		logger:      nil,
-		cosigner:    NewLocalCosigner("", nil, nil, nil),
-		Peers:       []Cosigner{},
+		cosigner:    thresholdsigner.NewLocalCosigner("", nil, nil, nil),
+		Peers:       []thresholdsigner.Cosigner{},
 	}
 
 	if _, err := s.Open(); err != nil {

@@ -1,4 +1,4 @@
-package signer
+package thresholdsigner
 
 import (
 	"crypto/rsa"

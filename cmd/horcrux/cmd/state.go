@@ -11,6 +11,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/strangelove-ventures/horcrux/signer"
+	"github.com/strangelove-ventures/horcrux/signer/thresholdsigner"
 
 	tmjson "github.com/tendermint/tendermint/libs/json"
 )
@@ -48,12 +49,12 @@ func showStateCmd() *cobra.Command {
 				return fmt.Errorf("%s does not exist, initialize config with horcrux config init and try again", config.HomeDir)
 			}
 
-			pv, err := signer.LoadSignState(config.privValStateFile(config.Config.ChainID))
+			pv, err := thresholdsigner.LoadSignState(config.privValStateFile(config.Config.ChainID))
 			if err != nil {
 				return err
 			}
 
-			share, err := signer.LoadSignState(config.shareStateFile(config.Config.ChainID))
+			share, err := thresholdsigner.LoadSignState(config.shareStateFile(config.Config.ChainID))
 			if err != nil {
 				return err
 			}
@@ -86,12 +87,12 @@ func setStateCmd() *cobra.Command {
 				return err
 			}
 
-			pv, err := signer.LoadSignState(config.privValStateFile(config.Config.ChainID))
+			pv, err := thresholdsigner.LoadSignState(config.privValStateFile(config.Config.ChainID))
 			if err != nil {
 				return err
 			}
 
-			share, err := signer.LoadSignState(config.shareStateFile(config.Config.ChainID))
+			share, err := thresholdsigner.LoadSignState(config.shareStateFile(config.Config.ChainID))
 			if err != nil {
 				return err
 			}
@@ -105,7 +106,7 @@ func setStateCmd() *cobra.Command {
 			fmt.Fprintf(cmd.OutOrStdout(), "Setting height %d\n", height)
 
 			pv.EphemeralPublic, share.EphemeralPublic = nil, nil
-			signState := signer.SignStateConsensus{
+			signState := thresholdsigner.SignStateConsensus{
 				Height:    height,
 				Round:     0,
 				Step:      0,
@@ -148,13 +149,13 @@ func importStateCmd() *cobra.Command {
 			}
 
 			// Recreate privValStateFile if necessary
-			pv, err := signer.LoadOrCreateSignState(config.privValStateFile(config.Config.ChainID))
+			pv, err := thresholdsigner.LoadOrCreateSignState(config.privValStateFile(config.Config.ChainID))
 			if err != nil {
 				return err
 			}
 
 			// shareStateFile does not exist during default config init, so create if necessary
-			share, err := signer.LoadOrCreateSignState(config.shareStateFile(config.Config.ChainID))
+			share, err := thresholdsigner.LoadOrCreateSignState(config.shareStateFile(config.Config.ChainID))
 			if err != nil {
 				return err
 			}
@@ -187,7 +188,7 @@ func importStateCmd() *cobra.Command {
 			}
 
 			pv.EphemeralPublic = nil
-			signState := signer.SignStateConsensus{
+			signState := thresholdsigner.SignStateConsensus{
 				Height:    pvState.Height,
 				Round:     int64(pvState.Round),
 				Step:      pvState.Step,
@@ -216,7 +217,7 @@ func importStateCmd() *cobra.Command {
 	}
 }
 
-func printSignState(ss signer.SignState) {
+func printSignState(ss thresholdsigner.SignState) {
 	fmt.Printf("  Height:    %v\n"+
 		"  Round:     %v\n"+
 		"  Step:      %v\n",

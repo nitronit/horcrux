@@ -1,4 +1,4 @@
-package signer
+package thresholdsigner
 
 func NewThresholdSignerHSM() ThresholdSigner {
 	panic("Not Implemented")

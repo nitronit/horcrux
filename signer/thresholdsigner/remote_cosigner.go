@@ -1,4 +1,4 @@
-package signer
+package thresholdsigner
 
 import (
 	"context"
@@ -31,6 +31,10 @@ const (
 )
 
 func getContext() (context.Context, context.CancelFunc) {
+	return context.WithTimeout(context.Background(), rpcTimeout)
+}
+
+func GetContext() (context.Context, context.CancelFunc) {
 	return context.WithTimeout(context.Background(), rpcTimeout)
 }
 

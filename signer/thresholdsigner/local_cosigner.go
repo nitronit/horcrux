@@ -1,9 +1,11 @@
-package signer
+package thresholdsigner
 
 import (
 	"crypto/rsa"
 	"sync"
 	"time"
+
+	metrics "github.com/strangelove-ventures/horcrux/signer/metrics"
 )
 
 type LastSignStateWrapper struct {
@@ -97,7 +99,7 @@ func (cosigner *LocalCosigner) GetAddress() string {
 // // Implements the Cosigner interface from Cosigner.go
 func (cosigner *LocalCosigner) GetEphemeralSecretParts(
 	hrst HRSTKey) (*CosignerEphemeralSecretPartsResponse, error) {
-	metricsTimeKeeper.SetPreviousLocalEphemeralShare(time.Now())
+	metrics.MetricsTimeKeeper.SetPreviousLocalEphemeralShare(time.Now())
 
 	res := &CosignerEphemeralSecretPartsResponse{
 		EncryptedSecrets: make([]CosignerEphemeralSecretPart, 0, len(cosigner.Peers)-1),

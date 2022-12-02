@@ -14,8 +14,8 @@ import (
 
 	"github.com/ory/dockertest"
 	"github.com/ory/dockertest/docker"
-	"github.com/strangelove-ventures/horcrux/signer"
 	"github.com/strangelove-ventures/horcrux/signer/proto"
+	"github.com/strangelove-ventures/horcrux/signer/thresholdsigner"
 	tmjson "github.com/tendermint/tendermint/libs/json"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
@@ -37,7 +37,7 @@ type TestSigner struct {
 	Pool           *dockertest.Pool
 	networkID      string
 	Container      *docker.Container
-	Key            signer.CosignerKey
+	Key            thresholdsigner.CosignerKey
 	tl             TestLogger
 }
 
@@ -255,7 +255,7 @@ func MakeTestSigners(
 			Pool:           pool,
 			networkID:      networkID,
 			Container:      nil,
-			Key:            signer.CosignerKey{},
+			Key:            thresholdsigner.CosignerKey{},
 			tl:             tl,
 		}
 		out = append(out, ts)

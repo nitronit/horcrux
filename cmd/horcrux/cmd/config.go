@@ -14,6 +14,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/strangelove-ventures/horcrux/client"
 	"github.com/strangelove-ventures/horcrux/signer"
+	"github.com/strangelove-ventures/horcrux/signer/thresholdsigner"
 	tmlog "github.com/tendermint/tendermint/libs/log"
 	"gopkg.in/yaml.v2"
 )
@@ -149,13 +150,13 @@ func initCmd() *cobra.Command {
 			}
 
 			// initialize state/{chainid}_priv_validator_state.json file
-			if _, err = signer.LoadOrCreateSignState(config.privValStateFile(cid)); err != nil {
+			if _, err = thresholdsigner.LoadOrCreateSignState(config.privValStateFile(cid)); err != nil {
 				return err
 			}
 
 			// if node is a cosigner initialize state/{chainid}_priv_validator_state.json file
 			if cs {
-				if _, err = signer.LoadOrCreateSignState(config.shareStateFile(cid)); err != nil {
+				if _, err = thresholdsigner.LoadOrCreateSignState(config.shareStateFile(cid)); err != nil {
 					return err
 				}
 			}
@@ -576,20 +577,20 @@ func (c *DiskConfig) CosignerPeers() (out []signer.CosignerConfig) {
 	return
 }
 
-func (c *DiskConfig) KeyAndThresholdSigner(logger tmlog.Logger) (signer.CosignerKey, signer.ThresholdSigner, error) {
+func (c *DiskConfig) KeyAndThresholdSigner(logger tmlog.Logger) (thresholdsigner.CosignerKey, thresholdsigner.ThresholdSigner, error) {
 	switch c.CosignerConfig.SignerType {
 	case "hsm", "HSM":
 		logger.Info("Cosigning with HSM")
-		return signer.CosignerKey{}, signer.NewThresholdSignerHSM(), nil
+		return thresholdsigner.CosignerKey{}, thresholdsigner.NewThresholdSignerHSM(), nil
 	default:
 
 		keyFilePath := config.keyFilePath(true)
 		if _, err := os.Stat(keyFilePath); os.IsNotExist(err) {
-			return signer.CosignerKey{}, nil, fmt.Errorf("private key share doesn't exist at path(%s)", keyFilePath)
+			return thresholdsigner.CosignerKey{}, nil, fmt.Errorf("private key share doesn't exist at path(%s)", keyFilePath)
 		}
-		key, err := signer.LoadCosignerKey(keyFilePath)
+		key, err := thresholdsigner.LoadCosignerKey(keyFilePath)
 		if err != nil {
-			return signer.CosignerKey{}, nil, fmt.Errorf("error reading cosigner key: %w", err)
+			return thresholdsigner.CosignerKey{}, nil, fmt.Errorf("error reading cosigner key: %w", err)
 		}
 		logger.Info("Cosigning with soft key",
 			"file", keyFilePath,
@@ -597,7 +598,7 @@ func (c *DiskConfig) KeyAndThresholdSigner(logger tmlog.Logger) (signer.Cosigner
 			"threshold", c.CosignerConfig.Threshold,
 			"total", c.CosignerConfig.Shares,
 		)
-		return key, signer.NewThresholdSignerSoft(
+		return key, thresholdsigner.NewThresholdSignerSoft(
 			key,
 			c.CosignerConfig.Threshold,
 			c.CosignerConfig.Shares,

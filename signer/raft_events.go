@@ -5,7 +5,9 @@ import (
 	"errors"
 	"time"
 
+	metrics "github.com/strangelove-ventures/horcrux/signer/metrics"
 	proto "github.com/strangelove-ventures/horcrux/signer/proto"
+	"github.com/strangelove-ventures/horcrux/signer/thresholdsigner"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
@@ -26,7 +28,7 @@ func (f *fsm) shouldRetain(key string) bool {
 }
 
 func (f *fsm) handleLSSEvent(value string) {
-	lss := &SignStateConsensus{}
+	lss := &thresholdsigner.SignStateConsensus{}
 	err := json.Unmarshal([]byte(value), lss)
 	if err != nil {
 		f.logger.Error("LSS Unmarshal Error", err.Error())
@@ -46,7 +48,7 @@ func (s *RaftStore) getLeaderGRPCClient() (proto.CosignerGRPCClient, *grpc.Clien
 		time.Sleep(100 * time.Millisecond)
 	}
 	if leader == "" {
-		totalRaftLeaderElectiontimeout.Inc()
+		metrics.TotalRaftLeaderElectiontimeout.Inc()
 		return nil, nil, errors.New("timed out waiting for leader election to complete")
 	}
 	conn, err := grpc.Dial(leader, grpc.WithTransportCredentials(insecure.NewCredentials()))
@@ -56,22 +58,22 @@ func (s *RaftStore) getLeaderGRPCClient() (proto.CosignerGRPCClient, *grpc.Clien
 	return proto.NewCosignerGRPCClient(conn), conn, nil
 }
 
-func (s *RaftStore) LeaderSignBlock(req CosignerSignBlockRequest) (*CosignerSignBlockResponse, error) {
+func (s *RaftStore) LeaderSignBlock(req thresholdsigner.CosignerSignBlockRequest) (*thresholdsigner.CosignerSignBlockResponse, error) {
 	client, conn, err := s.getLeaderGRPCClient()
 	if err != nil {
 		return nil, err
 	}
 	defer conn.Close()
-	context, cancelFunc := getContext()
+	context, cancelFunc := thresholdsigner.GetContext()
 	defer cancelFunc()
 	res, err := client.SignBlock(context, &proto.CosignerGRPCSignBlockRequest{
 		ChainID: req.ChainID,
-		Block:   req.Block.toProto(),
+		Block:   req.Block.ToProto(),
 	})
 	if err != nil {
 		return nil, err
 	}
-	return &CosignerSignBlockResponse{
+	return &thresholdsigner.CosignerSignBlockResponse{
 		Signature: res.GetSignature(),
 	}, nil
 }
