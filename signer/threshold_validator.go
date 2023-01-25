@@ -64,13 +64,9 @@ func NewThresholdValidator(opt *ThresholdValidatorOpt) *ThresholdValidator {
 	validator.pubkey = opt.Pubkey
 	validator.lastSignState = opt.SignState
 	validator.lastSignStateMutex = sync.Mutex{}
-	validator.lastSignStateInitiated = thresholdsigner.SignState{
-		Height:   opt.SignState.Height,
-		Round:    opt.SignState.Round,
-		Step:     opt.SignState.Step,
-		FilePath: "none",
-		Cache:    make(map[thresholdsigner.HRSKey]thresholdsigner.SignStateConsensus),
-	}
+
+	validator.lastSignStateInitiated = thresholdsigner.NewThresholdsignerSignState(opt.SignState.Height, opt.SignState.Round, opt.SignState.Step)
+
 	validator.lastSignStateInitiatedMutex = sync.Mutex{}
 	validator.raftStore = opt.RaftStore
 	validator.logger = opt.Logger
@@ -404,7 +400,8 @@ func (pv *ThresholdValidator) SignBlock(chainID string, block *Block) ([]byte, t
 
 	ourID := pv.cosigner.GetID()
 
-	encryptedEphemeralSharesThresholdMap := make(map[thresholdsigner.Cosigner][]thresholdsigner.CosignerEphemeralSecretPart)
+	encryptedEphemeralSharesThresholdMap := make(
+		map[thresholdsigner.Cosigner][]thresholdsigner.CosignerEphemeralSecretPart)
 	thresholdPeersMutex := sync.Mutex{}
 
 	for _, peer := range pv.peers {

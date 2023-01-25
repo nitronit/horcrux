@@ -199,10 +199,14 @@ func StartCosignerCmd() *cobra.Command {
 				Address:     cfg.ListenAddress,
 				Peers:       peers,
 				Total:       uint8(total),
-				Threshold:   uint8(cfg.CosignerThreshold),
+				Threshold:   cfg.CosignerThreshold,
 			}
 
-			localCosigner := thresholdsigner.NewLocalCosigner(localCosignerConfig.Address, localCosignerConfig.Peers, localCosignerConfig.SignState, thresholdSigner)
+			localCosigner := thresholdsigner.NewLocalCosigner(
+				localCosignerConfig.Address,
+				localCosignerConfig.Peers,
+				localCosignerConfig.SignState,
+				thresholdSigner)
 
 			timeout, err := time.ParseDuration(config.Config.CosignerConfig.Timeout)
 			if err != nil {

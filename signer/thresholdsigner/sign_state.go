@@ -59,9 +59,9 @@ type SignState struct {
 	EphemeralPublic []byte           `json:"ephemeral_public"`
 	Signature       []byte           `json:"signature,omitempty"`
 	SignBytes       tmbytes.HexBytes `json:"signbytes,omitempty"`
-	Cache           map[HRSKey]SignStateConsensus
+	cache           map[HRSKey]SignStateConsensus
 
-	FilePath string
+	filePath string // `json:"filepath"`
 }
 
 type SignStateConsensus struct {
@@ -77,6 +77,17 @@ func NewSignStateConsensus(height int64, round int64, step int8) SignStateConsen
 		Height: height,
 		Round:  round,
 		Step:   step,
+	}
+}
+
+// Creates a new Thresholdsigner Sign State
+func NewThresholdsignerSignState(height int64, round int64, step int8) SignState {
+	return SignState{
+		Height:   height,
+		Round:    round,
+		Step:     step,
+		filePath: "none",
+		cache:    make(map[HRSKey]SignStateConsensus),
 	}
 }
 
@@ -103,7 +114,7 @@ func (signState *SignState) GetFromCache(hrs HRSKey, lock *sync.Mutex) (HRSKey, 
 		Round:  signState.Round,
 		Step:   signState.Step,
 	}
-	if ssc, ok := signState.Cache[hrs]; ok {
+	if ssc, ok := signState.cache[hrs]; ok {
 		return latestBlock, &ssc
 	}
 	return latestBlock, nil
@@ -123,10 +134,10 @@ func (signState *SignState) Save(ssc SignStateConsensus, lock *sync.Mutex, async
 	}
 	// HRS is greater than existing state, allow
 
-	signState.Cache[HRSKey{Height: ssc.Height, Round: ssc.Round, Step: ssc.Step}] = ssc
-	for hrs := range signState.Cache {
+	signState.cache[HRSKey{Height: ssc.Height, Round: ssc.Round, Step: ssc.Step}] = ssc
+	for hrs := range signState.cache {
 		if hrs.Height < ssc.Height-blocksToCache {
-			delete(signState.Cache, hrs)
+			delete(signState.cache, hrs)
 		}
 	}
 
@@ -148,19 +159,22 @@ func (signState *SignState) Save(ssc SignStateConsensus, lock *sync.Mutex, async
 
 // Save persists the FilePvLastSignState to its filePath.
 func (signState *SignState) save() {
-	outFile := signState.FilePath
+	outFile := signState.filePath
 	if outFile == "none" {
 		return
 	}
 	if outFile == "" {
 		panic("cannot save SignState: filePath not set")
 	}
+	// TODO: ERAse this: fmt.Println("signState:", signState)
 	jsonBytes, err := tmjson.MarshalIndent(signState, "", "  ")
 	if err != nil {
+		// TODO: ERAse this:.Println("Some json error:\n\t", err)
 		panic(err)
 	}
 	err = tempfile.WriteFileAtomic(outFile, jsonBytes, 0600)
 	if err != nil {
+		fmt.Println("Tempfile error")
 		panic(err)
 	}
 }
@@ -259,15 +273,15 @@ func LoadSignState(filepath string) (SignState, error) {
 	if err != nil {
 		return state, err
 	}
-	state.Cache = make(map[HRSKey]SignStateConsensus)
-	state.Cache[HRSKey{Height: state.Height, Round: state.Round, Step: state.Step}] = SignStateConsensus{
+	state.cache = make(map[HRSKey]SignStateConsensus)
+	state.cache[HRSKey{Height: state.Height, Round: state.Round, Step: state.Step}] = SignStateConsensus{
 		Height:    state.Height,
 		Round:     state.Round,
 		Step:      state.Step,
 		Signature: state.Signature,
 		SignBytes: state.SignBytes,
 	}
-	state.FilePath = filepath
+	state.filePath = filepath
 	return state, nil
 }
 
@@ -282,10 +296,13 @@ func LoadOrCreateSignState(filepath string) (SignState, error) {
 
 	// There was an error loading the sign state
 	// Make an empty sign state and save it
+	fmt.Println("There was an error loading the sign state. Instead we create an empty state and save it")
+	fmt.Println("filepath:", filepath)
 	state := SignState{}
-	state.FilePath = filepath
-	state.Cache = make(map[HRSKey]SignStateConsensus)
+	state.filePath = filepath
+	state.cache = make(map[HRSKey]SignStateConsensus)
 	state.save()
+	fmt.Println("state is: ", state)
 	return state, nil
 }
 

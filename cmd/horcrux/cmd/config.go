@@ -577,7 +577,8 @@ func (c *DiskConfig) CosignerPeers() (out []signer.CosignerConfig) {
 	return
 }
 
-func (c *DiskConfig) KeyAndThresholdSigner(logger tmlog.Logger) (thresholdsigner.CosignerKey, thresholdsigner.ThresholdSigner, error) {
+func (c *DiskConfig) KeyAndThresholdSigner(logger tmlog.Logger) (
+	thresholdsigner.CosignerKey, thresholdsigner.ThresholdSigner, error) {
 	switch c.CosignerConfig.SignerType {
 	case "hsm", "HSM":
 		logger.Info("Cosigning with HSM")

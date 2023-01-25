@@ -143,15 +143,15 @@ type Block struct {
 	Timestamp time.Time
 }
 
-func (block Block) toProto() *proto.Block {
-	return &proto.Block{
-		Height:    block.Height,
-		Round:     block.Round,
-		Step:      int32(block.Step),
-		SignBytes: block.SignBytes,
-		Timestamp: block.Timestamp.UnixNano(),
-	}
-}
+// func (block Block) toProto() *proto.Block {
+// 	return &proto.Block{
+// 		Height:    block.Height,
+// 		Round:     block.Round,
+// 		Step:      int32(block.Step),
+// 		SignBytes: block.SignBytes,
+// 		Timestamp: block.Timestamp.UnixNano(),
+// 	}
+// }
 
 func (block Block) ToProto() *proto.Block {
 	return &proto.Block{
