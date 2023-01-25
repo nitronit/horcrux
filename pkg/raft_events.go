@@ -5,9 +5,9 @@ import (
 	"errors"
 	"time"
 
-	metrics "github.com/strangelove-ventures/horcrux/signer/metrics"
-	proto "github.com/strangelove-ventures/horcrux/signer/proto"
-	"github.com/strangelove-ventures/horcrux/signer/thresholdsigner"
+	metrics "github.com/strangelove-ventures/horcrux/pkg/metrics"
+	proto "github.com/strangelove-ventures/horcrux/pkg/proto"
+	"github.com/strangelove-ventures/horcrux/pkg/thresholdsigner"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )

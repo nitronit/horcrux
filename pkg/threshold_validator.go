@@ -7,11 +7,11 @@ import (
 	"sync"
 	"time"
 
-	metrics "github.com/strangelove-ventures/horcrux/signer/metrics"
+	metrics "github.com/strangelove-ventures/horcrux/pkg/metrics"
 
 	"github.com/hashicorp/raft"
-	proto "github.com/strangelove-ventures/horcrux/signer/proto"
-	thresholdsigner "github.com/strangelove-ventures/horcrux/signer/thresholdsigner"
+	proto "github.com/strangelove-ventures/horcrux/pkg/proto"
+	thresholdsigner "github.com/strangelove-ventures/horcrux/pkg/thresholdsigner"
 	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/libs/log"
 	tmProto "github.com/tendermint/tendermint/proto/tendermint/types"

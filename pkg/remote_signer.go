@@ -5,8 +5,8 @@ import (
 	"net"
 	"time"
 
-	metrics "github.com/strangelove-ventures/horcrux/signer/metrics"
-	thresholdsigner "github.com/strangelove-ventures/horcrux/signer/thresholdsigner"
+	metrics "github.com/strangelove-ventures/horcrux/pkg/metrics"
+	thresholdsigner "github.com/strangelove-ventures/horcrux/pkg/thresholdsigner"
 	tmCryptoEd2219 "github.com/tendermint/tendermint/crypto/ed25519"
 	tmCryptoEncoding "github.com/tendermint/tendermint/crypto/encoding"
 	tmLog "github.com/tendermint/tendermint/libs/log"

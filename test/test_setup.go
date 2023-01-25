@@ -13,7 +13,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/types"
 	"github.com/ory/dockertest"
 	"github.com/ory/dockertest/docker"
-	"github.com/strangelove-ventures/horcrux/signer"
+	signer "github.com/strangelove-ventures/horcrux/pkg"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/sync/errgroup"
 )

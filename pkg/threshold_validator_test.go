@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	thresholdsigner "github.com/strangelove-ventures/horcrux/signer/thresholdsigner"
+	thresholdsigner "github.com/strangelove-ventures/horcrux/pkg/thresholdsigner"
 	"github.com/stretchr/testify/require"
 	tmCryptoEd25519 "github.com/tendermint/tendermint/crypto/ed25519"
 	tmlog "github.com/tendermint/tendermint/libs/log"

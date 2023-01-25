@@ -13,7 +13,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/strangelove-ventures/horcrux/signer"
+	signer "github.com/strangelove-ventures/horcrux/pkg"
 	tmlog "github.com/tendermint/tendermint/libs/log"
 	tmservice "github.com/tendermint/tendermint/libs/service"
 

@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	metrics "github.com/strangelove-ventures/horcrux/signer/metrics"
+	metrics "github.com/strangelove-ventures/horcrux/pkg/metrics"
 )
 
 type LastSignStateWrapper struct {

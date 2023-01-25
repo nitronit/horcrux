@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	thresholdsigner "github.com/strangelove-ventures/horcrux/signer/thresholdsigner"
+	thresholdsigner "github.com/strangelove-ventures/horcrux/pkg/thresholdsigner"
 )
 
 // Test_StoreInMemOpenSingleNode tests that a command can be applied to the log

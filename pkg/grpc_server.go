@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/hashicorp/raft"
-	proto "github.com/strangelove-ventures/horcrux/signer/proto"
-	threholdsigner "github.com/strangelove-ventures/horcrux/signer/thresholdsigner"
+	proto "github.com/strangelove-ventures/horcrux/pkg/proto"
+	threholdsigner "github.com/strangelove-ventures/horcrux/pkg/thresholdsigner"
 )
 
 type GRPCServer struct {

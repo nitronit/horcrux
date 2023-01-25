@@ -13,8 +13,8 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/strangelove-ventures/horcrux/client"
-	"github.com/strangelove-ventures/horcrux/signer"
-	"github.com/strangelove-ventures/horcrux/signer/thresholdsigner"
+	signer "github.com/strangelove-ventures/horcrux/pkg"
+	"github.com/strangelove-ventures/horcrux/pkg/thresholdsigner"
 	tmlog "github.com/tendermint/tendermint/libs/log"
 	"gopkg.in/yaml.v2"
 )

@@ -14,8 +14,8 @@ import (
 
 	"github.com/ory/dockertest"
 	"github.com/ory/dockertest/docker"
-	"github.com/strangelove-ventures/horcrux/signer/proto"
-	"github.com/strangelove-ventures/horcrux/signer/thresholdsigner"
+	"github.com/strangelove-ventures/horcrux/pkg/proto"
+	"github.com/strangelove-ventures/horcrux/pkg/thresholdsigner"
 	tmjson "github.com/tendermint/tendermint/libs/json"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"

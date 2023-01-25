@@ -5,7 +5,7 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
-	"github.com/strangelove-ventures/horcrux/signer"
+	signer "github.com/strangelove-ventures/horcrux/pkg"
 	tmlog "github.com/tendermint/tendermint/libs/log"
 	tmService "github.com/tendermint/tendermint/libs/service"
 	"github.com/tendermint/tendermint/privval"

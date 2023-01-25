@@ -3,7 +3,7 @@ package thresholdsigner
 import (
 	"time"
 
-	proto "github.com/strangelove-ventures/horcrux/signer/proto"
+	proto "github.com/strangelove-ventures/horcrux/pkg/proto"
 )
 
 // HRSKey Height Round Step Key to keep track of ...?

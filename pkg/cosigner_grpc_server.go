@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/hashicorp/raft"
-	proto "github.com/strangelove-ventures/horcrux/signer/proto"
-	"github.com/strangelove-ventures/horcrux/signer/thresholdsigner"
+	proto "github.com/strangelove-ventures/horcrux/pkg/proto"
+	"github.com/strangelove-ventures/horcrux/pkg/thresholdsigner"
 )
 
 type CosignerGRPCServer struct {

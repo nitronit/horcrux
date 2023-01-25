@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/ory/dockertest"
-	"github.com/strangelove-ventures/horcrux/signer/thresholdsigner"
+	"github.com/strangelove-ventures/horcrux/pkg/thresholdsigner"
 	crypto "github.com/tendermint/tendermint/crypto"
 	ed25519 "github.com/tendermint/tendermint/crypto/ed25519"
 	"github.com/tendermint/tendermint/privval"

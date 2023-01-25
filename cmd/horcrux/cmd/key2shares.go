@@ -20,7 +20,7 @@ import (
 	"strconv"
 
 	"github.com/spf13/cobra"
-	"github.com/strangelove-ventures/horcrux/signer/thresholdsigner"
+	"github.com/strangelove-ventures/horcrux/pkg/thresholdsigner"
 	"github.com/tendermint/tendermint/libs/os"
 )
 

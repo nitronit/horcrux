@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/strangelove-ventures/horcrux/signer/thresholdsigner"
+	"github.com/strangelove-ventures/horcrux/pkg/thresholdsigner"
 	"github.com/stretchr/testify/require"
 )
 
