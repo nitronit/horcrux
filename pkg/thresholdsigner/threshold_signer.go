@@ -1,6 +1,8 @@
 package thresholdsigner
 
 import (
+	"sync"
+
 	tsed25519 "gitlab.com/unit410/threshold-ed25519/pkg"
 )
 
@@ -24,6 +26,14 @@ type ThresholdSigner interface {
 	Sign(req CosignerSignRequest, m *LastSignStateWrapper) (CosignerSignResponse, error)
 
 	GetID() (int, error)
+}
+type LastSignStateWrapper struct {
+	// Signing is thread safe - lastSignStateMutex is used for putting locks so only one goroutine can r/w to the function
+	lastSignStateMutex sync.Mutex
+
+	// lastSignState stores the last sign state for a share we have fully signed
+	// incremented whenever we are asked to sign a share
+	LastSignState *SignState
 }
 
 // PeerMetadata holds the share and the ephermeral secret public key

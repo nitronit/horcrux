@@ -2,20 +2,10 @@ package thresholdsigner
 
 import (
 	"crypto/rsa"
-	"sync"
 	"time"
 
 	metrics "github.com/strangelove-ventures/horcrux/pkg/metrics"
 )
-
-type LastSignStateWrapper struct {
-	// Signing is thread safe - lastSignStateMutex is used for putting locks so only one goroutine can r/w to the function
-	lastSignStateMutex sync.Mutex
-
-	// lastSignState stores the last sign state for a share we have fully signed
-	// incremented whenever we are asked to sign a share
-	LastSignState *SignState
-}
 
 type CosignerPeer struct {
 	ID        int

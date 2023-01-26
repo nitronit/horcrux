@@ -65,6 +65,7 @@ type SignState struct {
 }
 
 type SignStateConsensus struct {
+	// TODO: Ask why we dont use HRS anonuymus fields.
 	Height    int64
 	Round     int64
 	Step      int8

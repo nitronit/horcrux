@@ -13,6 +13,7 @@ type HRSKey struct {
 	Step   int8
 }
 
+// TODO Change to anonymous fields, would remove some duplication?
 // HRSTKey Height Round Step Time to keep track of ....?
 type HRSTKey struct {
 	Height    int64

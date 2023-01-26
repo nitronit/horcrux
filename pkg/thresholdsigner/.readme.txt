@@ -1,0 +1,7 @@
+                            Cosigner                            - interface
+        LocalCosigner                       RemoteCosigner      - implementations of Cosigner
+ThresholdEd25519SignatureImpl                                   - reference to the ThresholdEd25519Signature implementation that Local Cosigner should use
+
+
+                    ThresholdEd25519Signature                              - interface
+LocalThresholdEd25519Signature     RemoteThresholdEd25519Signature         - implementations of ThresholdEd25519Signature (only Local one for now)
