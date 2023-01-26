@@ -65,7 +65,8 @@ func NewThresholdValidator(opt *ThresholdValidatorOpt) *ThresholdValidator {
 	validator.lastSignState = opt.SignState
 	validator.lastSignStateMutex = sync.Mutex{}
 
-	validator.lastSignStateInitiated = thresholdsigner.NewThresholdsignerSignState(opt.SignState.Height, opt.SignState.Round, opt.SignState.Step)
+	validator.lastSignStateInitiated = thresholdsigner.NewThresholdsignerSignState(
+		opt.SignState.Height, opt.SignState.Round, opt.SignState.Step)
 
 	validator.lastSignStateInitiatedMutex = sync.Mutex{}
 	validator.raftStore = opt.RaftStore
@@ -326,7 +327,8 @@ func (pv *ThresholdValidator) SignBlock(chainID string, block *Block) ([]byte, t
 	if pv.raftStore.raft.State() != raft.Leader {
 		pv.logger.Debug("I am not the raft leader. Proxying request to the leader")
 		metrics.TotalNotRaftLeader.Inc()
-		signRes, err := pv.raftStore.LeaderSignBlock(thresholdsigner.CosignerSignBlockRequest{ChainID: chainID, Block: blocka})
+		signRes, err := pv.raftStore.LeaderSignBlock(thresholdsigner.CosignerSignBlockRequest{
+			ChainID: chainID, Block: blocka})
 		if err != nil {
 			if _, ok := err.(*rpcTypes.RPCError); ok {
 				rpcErrUnwrapped := err.(*rpcTypes.RPCError).Data
