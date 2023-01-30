@@ -17,6 +17,8 @@ import (
 	tmProto "github.com/tendermint/tendermint/proto/tendermint/types"
 	rpcTypes "github.com/tendermint/tendermint/rpc/jsonrpc/types"
 	tm "github.com/tendermint/tendermint/types"
+
+	// TODO: Refactor. This should be the responsibility of the thresholdsigner and/or the LocalSigner
 	tsed25519 "gitlab.com/unit410/threshold-ed25519/pkg"
 )
 
@@ -124,57 +126,10 @@ func (pv *ThresholdValidator) SignProposal(chainID string, proposal *tmProto.Pro
 	return err
 }
 
-type Block struct {
-	Height    int64
-	Round     int64
-	Step      int8
-	SignBytes []byte
-	Timestamp time.Time
-}
-
-func (block Block) toProto() *proto.Block {
-	return &proto.Block{
-		Height:    block.Height,
-		Round:     block.Round,
-		Step:      int32(block.Step),
-		SignBytes: block.SignBytes,
-		Timestamp: block.Timestamp.UnixNano(),
-	}
-}
-
-func (block Block) ToProto() *proto.Block {
-	return &proto.Block{
-		Height:    block.Height,
-		Round:     block.Round,
-		Step:      int32(block.Step),
-		SignBytes: block.SignBytes,
-		Timestamp: block.Timestamp.UnixNano(),
-	}
-}
-
-type BeyondBlockError struct {
-	msg string
-}
-
-func (e *BeyondBlockError) Error() string { return e.msg }
-
 func (pv *ThresholdValidator) newBeyondBlockError(hrs thresholdsigner.HRSKey) *BeyondBlockError {
 	return &BeyondBlockError{
 		msg: fmt.Sprintf("Progress already started on block %d.%d.%d, skipping %d.%d.%d",
 			pv.lastSignStateInitiated.Height, pv.lastSignStateInitiated.Round, pv.lastSignStateInitiated.Step,
-			hrs.Height, hrs.Round, hrs.Step),
-	}
-}
-
-type StillWaitingForBlockError struct {
-	msg string
-}
-
-func (e *StillWaitingForBlockError) Error() string { return e.msg }
-
-func newStillWaitingForBlockError(hrs thresholdsigner.HRSKey) *StillWaitingForBlockError {
-	return &StillWaitingForBlockError{
-		msg: fmt.Sprintf("Still waiting for block %d.%d.%d",
 			hrs.Height, hrs.Round, hrs.Step),
 	}
 }
@@ -267,20 +222,6 @@ func (pv *ThresholdValidator) waitForPeerSetEphemeralSharesAndSign(
 	}
 }
 
-func waitUntilCompleteOrTimeout(wg *sync.WaitGroup, timeout time.Duration) bool {
-	c := make(chan struct{})
-	go func() {
-		defer close(c)
-		wg.Wait()
-	}()
-	select {
-	case <-c:
-		return false // completed normally
-	case <-time.After(timeout):
-		return true // timed out
-	}
-}
-
 func (pv *ThresholdValidator) getExistingBlockSignature(block *Block) ([]byte, time.Time, error) {
 	height, round, step, stamp, signBytes := block.Height, block.Round, block.Step, block.Timestamp, block.SignBytes
 	hrs := thresholdsigner.HRSKey{
@@ -321,6 +262,7 @@ func (pv *ThresholdValidator) SignBlock(chainID string, block *Block) ([]byte, t
 	timeStartSignBlock := time.Now()
 	// Only the leader can execute this function. Followers can handle the requests,
 	// but they just need to proxy the request to the raft leader
+	// TODO: This seems to be one of the issues to decouple RAFT
 	if pv.raftStore.raft == nil {
 		return nil, stamp, errors.New("raft not yet initialized")
 	}
@@ -514,4 +456,65 @@ func (pv *ThresholdValidator) SignBlock(chainID string, block *Block) ([]byte, t
 	metrics.TimedSignBlockLag.Observe(timeSignBlock)
 
 	return signature, stamp, nil
+}
+
+type Block struct {
+	Height    int64
+	Round     int64
+	Step      int8
+	SignBytes []byte
+	Timestamp time.Time
+}
+
+func (block Block) toProto() *proto.Block {
+	return &proto.Block{
+		Height:    block.Height,
+		Round:     block.Round,
+		Step:      int32(block.Step),
+		SignBytes: block.SignBytes,
+		Timestamp: block.Timestamp.UnixNano(),
+	}
+}
+
+func (block Block) ToProto() *proto.Block {
+	return &proto.Block{
+		Height:    block.Height,
+		Round:     block.Round,
+		Step:      int32(block.Step),
+		SignBytes: block.SignBytes,
+		Timestamp: block.Timestamp.UnixNano(),
+	}
+}
+
+type BeyondBlockError struct {
+	msg string
+}
+
+func (e *BeyondBlockError) Error() string { return e.msg }
+
+type StillWaitingForBlockError struct {
+	msg string
+}
+
+func (e *StillWaitingForBlockError) Error() string { return e.msg }
+
+func newStillWaitingForBlockError(hrs thresholdsigner.HRSKey) *StillWaitingForBlockError {
+	return &StillWaitingForBlockError{
+		msg: fmt.Sprintf("Still waiting for block %d.%d.%d",
+			hrs.Height, hrs.Round, hrs.Step),
+	}
+}
+
+func waitUntilCompleteOrTimeout(wg *sync.WaitGroup, timeout time.Duration) bool {
+	c := make(chan struct{})
+	go func() {
+		defer close(c)
+		wg.Wait()
+	}()
+	select {
+	case <-c:
+		return false // completed normally
+	case <-time.After(timeout):
+		return true // timed out
+	}
 }

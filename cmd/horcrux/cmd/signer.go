@@ -4,8 +4,9 @@ import (
 	"log"
 	"os"
 
+	signer2 "github.com/strangelove-ventures/horcrux/pkg/signer"
+
 	"github.com/spf13/cobra"
-	signer "github.com/strangelove-ventures/horcrux/pkg"
 	tmlog "github.com/tendermint/tendermint/libs/log"
 	tmService "github.com/tendermint/tendermint/libs/service"
 	"github.com/tendermint/tendermint/privval"
@@ -29,7 +30,7 @@ func StartSignerCmd() *cobra.Command {
 		Args:         cobra.NoArgs,
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			if err = signer.RequireNotRunning(config.PidFile); err != nil {
+			if err = signer2.RequireNotRunning(config.PidFile); err != nil {
 				return err
 			}
 
@@ -56,7 +57,7 @@ func StartSignerCmd() *cobra.Command {
 			logger.Info("Tendermint Validator", "mode", "single",
 				"priv-key", privValKeyFile, "priv-state-dir", config.StateDir)
 
-			pv = &signer.PvGuard{
+			pv = &signer2.PvGuard{
 				PrivValidator: privval.LoadFilePVEmptyState(privValKeyFile, config.privValStateFile(chainID)),
 			}
 
@@ -66,12 +67,12 @@ func StartSignerCmd() *cobra.Command {
 			}
 			logger.Info("Signer", "pubkey", pubkey)
 
-			services, err = signer.StartRemoteSigners(services, logger, config.Config.ChainID, pv, nodes)
+			services, err = signer2.StartRemoteSigners(services, logger, config.Config.ChainID, pv, nodes)
 			if err != nil {
 				panic(err)
 			}
 
-			signer.WaitAndTerminate(logger, services, config.PidFile)
+			signer2.WaitAndTerminate(logger, services, config.PidFile)
 
 			return nil
 		},

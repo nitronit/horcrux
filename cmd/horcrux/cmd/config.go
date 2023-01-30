@@ -3,6 +3,7 @@ package cmd
 import (
 	"errors"
 	"fmt"
+	"github.com/strangelove-ventures/horcrux/pkg/signer"
 	"net"
 	"net/url"
 	"os"
@@ -13,7 +14,6 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/strangelove-ventures/horcrux/client"
-	signer "github.com/strangelove-ventures/horcrux/pkg"
 	"github.com/strangelove-ventures/horcrux/pkg/thresholdsigner"
 	tmlog "github.com/tendermint/tendermint/libs/log"
 	"gopkg.in/yaml.v2"

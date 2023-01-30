@@ -4,13 +4,13 @@ import (
 	"bufio"
 	"encoding/base64"
 	"fmt"
+	"github.com/strangelove-ventures/horcrux/pkg/signer"
 	"os"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/spf13/cobra"
-	signer "github.com/strangelove-ventures/horcrux/pkg"
 	"github.com/strangelove-ventures/horcrux/pkg/thresholdsigner"
 
 	tmjson "github.com/tendermint/tendermint/libs/json"

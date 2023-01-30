@@ -57,8 +57,9 @@ type RaftStore struct {
 
 	raft *raft.Raft // The consensus mechanism
 
-	logger             log.Logger
-	cosigner           *thresholdsigner.LocalCosigner
+	logger   log.Logger
+	cosigner *thresholdsigner.LocalCosigner
+	// TODO Take a look at this
 	thresholdValidator *ThresholdValidator
 }
 

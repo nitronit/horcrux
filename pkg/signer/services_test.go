@@ -3,6 +3,7 @@ package signer_test
 import (
 	"errors"
 	"fmt"
+	"github.com/strangelove-ventures/horcrux/pkg/signer"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -13,7 +14,6 @@ import (
 	"testing"
 	"time"
 
-	signer "github.com/strangelove-ventures/horcrux/pkg"
 	tmlog "github.com/tendermint/tendermint/libs/log"
 	tmservice "github.com/tendermint/tendermint/libs/service"
 

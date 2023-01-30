@@ -10,9 +10,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/strangelove-ventures/horcrux/pkg/signer"
+
 	"github.com/cosmos/cosmos-sdk/types/bech32"
 	"github.com/spf13/cobra"
-	signer "github.com/strangelove-ventures/horcrux/pkg"
 	"github.com/strangelove-ventures/horcrux/pkg/thresholdsigner"
 	tmlog "github.com/tendermint/tendermint/libs/log"
 	tmService "github.com/tendermint/tendermint/libs/service"
@@ -239,7 +240,7 @@ func StartCosignerCmd() *cobra.Command {
 				RaftStore: raftStore,
 				Logger:    logger,
 			})
-
+			// TODO why?
 			raftStore.SetThresholdValidator(val.(*signer.ThresholdValidator))
 
 			pv = &signer.PvGuard{PrivValidator: val}

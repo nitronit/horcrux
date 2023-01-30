@@ -81,6 +81,7 @@ func (rpc *CosignerGRPCServer) TransferLeadership(
 			if thisPeerID == leaderID {
 				peerRaftAddress := p2pURLToRaftAddress(peer.GetAddress())
 				fmt.Printf("Transferring leadership to ID: %s - Address: %s\n", thisPeerID, peerRaftAddress)
+				// TODO: Abstract out this so it takes itself instead of a raft function
 				rpc.raftStore.raft.LeadershipTransferToServer(raft.ServerID(thisPeerID), raft.ServerAddress(peerRaftAddress))
 				return &proto.CosignerGRPCTransferLeadershipResponse{LeaderID: thisPeerID, LeaderAddress: peerRaftAddress}, nil
 			}

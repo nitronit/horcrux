@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"github.com/strangelove-ventures/horcrux/pkg/signer"
 	"net"
 	"os"
 	"path/filepath"
@@ -13,7 +14,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/types"
 	"github.com/ory/dockertest"
 	"github.com/ory/dockertest/docker"
-	signer "github.com/strangelove-ventures/horcrux/pkg"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/sync/errgroup"
 )
