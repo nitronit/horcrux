@@ -8,6 +8,7 @@ import (
 	"crypto/sha256"
 	"errors"
 	"fmt"
+	"time"
 
 	tmcryptoed25519 "github.com/tendermint/tendermint/crypto/ed25519"
 	tmjson "github.com/tendermint/tendermint/libs/json"
@@ -46,26 +47,26 @@ func NewThresholdSignerSoft(key CosignerKey, threshold, total uint8) ThresholdSi
 	return softSigner
 }
 
-// Implements ThresholdSigner
+// Implements ThresholdSigner in threshold_signer.go
 func (softSigner *ThresholdSignerSoft) Type() string {
 	return SignerTypeSoftSign
 }
 
-// Implements ThresholdSigner
+// Implements ThresholdSigner in threshold_signer.go
 func (softSigner *ThresholdSignerSoft) GetID() (int, error) {
 	return softSigner.key.ID, nil
 }
 
-// Implements ThresholdSigner
+// Implements ThresholdSigner in threshold_signer.go
 func (softSigner *ThresholdSignerSoft) Sign(
-	req CosignerSignRequest, m *LastSignStateWrapper) (CosignerSignResponse, error) {
+	signBytes []byte, m *LastSignStateWrapper) (CosignerSignResponse, error) {
 	m.lastSignStateMutex.Lock()
 	defer m.lastSignStateMutex.Unlock()
 
 	res := CosignerSignResponse{}
 	lss := m.LastSignState
 
-	hrst, err := UnpackHRST(req.SignBytes)
+	hrst, err := UnpackHRST(signBytes)
 	if err != nil {
 		return res, err
 	}
@@ -79,11 +80,11 @@ func (softSigner *ThresholdSignerSoft) Sign(
 	// It is ok to re-sign a different timestamp if that is the only difference in the sign bytes
 	// same HRS, and only differ by timestamp  its ok to sign again
 	if sameHRS {
-		if bytes.Equal(req.SignBytes, lss.SignBytes) {
+		if bytes.Equal(signBytes, lss.SignBytes) {
 			res.EphemeralPublic = lss.EphemeralPublic
 			res.Signature = lss.Signature
 			return res, nil
-		} else if err := lss.OnlyDifferByTimestamp(req.SignBytes); err != nil {
+		} else if err := lss.OnlyDifferByTimestamp(signBytes); err != nil {
 			return res, err // same HRS, and only differ by timestamp  its ok to sign again
 		}
 	}
@@ -120,7 +121,7 @@ func (softSigner *ThresholdSignerSoft) Sign(
 	}
 
 	sig := tsed25519.SignWithShare(
-		req.SignBytes, softSigner.key.ShareKey, ephemeralShare, softSigner.pubKeyBytes, ephemeralPublic)
+		signBytes, softSigner.key.ShareKey, ephemeralShare, softSigner.pubKeyBytes, ephemeralPublic)
 
 	m.LastSignState.EphemeralPublic = ephemeralPublic
 	err = m.LastSignState.Save(SignStateConsensus{
@@ -128,7 +129,7 @@ func (softSigner *ThresholdSignerSoft) Sign(
 		Round:     hrst.Round,
 		Step:      hrst.Step,
 		Signature: sig,
-		SignBytes: req.SignBytes,
+		SignBytes: signBytes,
 	}, nil, true)
 	if err != nil {
 		var isSameHRSError *SameHRSError
@@ -150,14 +151,14 @@ func (softSigner *ThresholdSignerSoft) Sign(
 	return res, nil
 }
 
-// Implements ThresholdSigner
+// Implements ThresholdSigner from threshold_signer.go
 func (softSigner *ThresholdSignerSoft) DealShares(
-	req CosignerGetEphemeralSecretPartRequest) (HrsMetadata, error) {
+	height int64, round int64, step int8, timestamp time.Time) (HrsMetadata, error) {
 	hrsKey := HRSTKey{
-		Height:    req.Height,
-		Round:     req.Round,
-		Step:      req.Step,
-		Timestamp: req.Timestamp.UnixNano(),
+		Height:    height,
+		Round:     round,
+		Step:      step,
+		Timestamp: timestamp.UnixNano(),
 	}
 
 	meta, ok := softSigner.hrsMeta[hrsKey]
@@ -187,10 +188,9 @@ func (softSigner *ThresholdSignerSoft) DealShares(
 
 // Get the ephemeral secret part for an ephemeral share
 // The ephemeral secret part is encrypted for the receiver
-// Implements ThresholdSigner
+// Implements ThresholdSigner interface from threshold_signer.go
 func (softSigner *ThresholdSignerSoft) GetEphemeralSecretPart(
 	req CosignerGetEphemeralSecretPartRequest, m *LastSignStateWrapper, peers map[int]CosignerPeer) (
-
 	CosignerEphemeralSecretPart, error) {
 
 	res := CosignerEphemeralSecretPart{}
@@ -210,12 +210,7 @@ func (softSigner *ThresholdSignerSoft) GetEphemeralSecretPart(
 
 	// generate metadata placeholder
 	if !ok {
-		newMeta, err := softSigner.DealShares(CosignerGetEphemeralSecretPartRequest{
-			Height:    req.Height,
-			Round:     req.Round,
-			Step:      req.Step,
-			Timestamp: req.Timestamp,
-		})
+		newMeta, err := softSigner.DealShares(req.Height, req.Round, req.Step, req.Timestamp)
 
 		if err != nil {
 			return res, err
@@ -272,7 +267,7 @@ func (softSigner *ThresholdSignerSoft) GetEphemeralSecretPart(
 }
 
 // Store an ephemeral secret share part provided by another cosigner (signer)
-// Implements ThresholdSigner
+// Implements ThresholdSigner interface in threshold_signer.go
 func (softSigner *ThresholdSignerSoft) SetEphemeralSecretPart(
 	req CosignerSetEphemeralSecretPartRequest, m *LastSignStateWrapper, peers map[int]CosignerPeer) error {
 
@@ -320,11 +315,8 @@ func (softSigner *ThresholdSignerSoft) SetEphemeralSecretPart(
 
 	meta, ok := softSigner.hrsMeta[hrst] // generate metadata placeholder, softSigner.HrsMeta[hrst] is non-addressable
 	if !ok {
-		newMeta, err := softSigner.DealShares(CosignerGetEphemeralSecretPartRequest{
-			Height: req.Height,
-			Round:  req.Round,
-			Step:   req.Step,
-		})
+		// TODO: this is a bit of a hack, we should be able to get it from hrst variable?
+		newMeta, err := softSigner.DealShares(req.Height, req.Round, req.Step, time.Time{})
 
 		if err != nil {
 			return err
@@ -345,3 +337,6 @@ func (softSigner *ThresholdSignerSoft) SetEphemeralSecretPart(
 
 	return nil
 }
+
+// _ is a type assertion to ensure that ThresholdSignerSoft implements the ThresholdSigner interface
+var _ ThresholdSigner = (*ThresholdSignerSoft)(nil)

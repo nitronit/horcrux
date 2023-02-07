@@ -42,3 +42,6 @@ func (hsmSigner *ThresholdSignerHSM) Sign(
 func (hsmSigner *ThresholdSignerHSM) GetID() (int, error) {
 	panic("Not implemented")
 }
+
+// _ is a type assertion to ensure that ThresholdSignerHSM implements ThresholdSigner
+// var _ ThresholdSigner = (*ThresholdSignerHSM)(nil)

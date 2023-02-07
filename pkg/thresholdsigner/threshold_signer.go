@@ -2,6 +2,7 @@ package thresholdsigner
 
 import (
 	"sync"
+	"time"
 
 	tsed25519 "gitlab.com/unit410/threshold-ed25519/pkg"
 )
@@ -15,7 +16,7 @@ const (
 type ThresholdSigner interface {
 	Type() string
 
-	DealShares(req CosignerGetEphemeralSecretPartRequest) (HrsMetadata, error)
+	DealShares(height int64, round int64, step int8, timestamp time.Time) (HrsMetadata, error)
 
 	GetEphemeralSecretPart(req CosignerGetEphemeralSecretPartRequest, m *LastSignStateWrapper,
 		peers map[int]CosignerPeer) (CosignerEphemeralSecretPart, error)
@@ -23,7 +24,7 @@ type ThresholdSigner interface {
 	SetEphemeralSecretPart(req CosignerSetEphemeralSecretPartRequest, m *LastSignStateWrapper,
 		peers map[int]CosignerPeer) error
 
-	Sign(req CosignerSignRequest, m *LastSignStateWrapper) (CosignerSignResponse, error)
+	Sign(signBytes []byte, m *LastSignStateWrapper) (CosignerSignResponse, error)
 
 	GetID() (int, error)
 }

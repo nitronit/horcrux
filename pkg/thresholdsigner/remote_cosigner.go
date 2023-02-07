@@ -10,6 +10,10 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
+const (
+	rpcTimeout = 4 * time.Second
+)
+
 // RemoteCosigner uses CosignerGRPC to request signing from a remote cosigner
 type RemoteCosigner struct {
 	id      int
@@ -26,10 +30,7 @@ func NewRemoteCosigner(id int, address string) *RemoteCosigner {
 	return cosigner
 }
 
-const (
-	rpcTimeout = 4 * time.Second
-)
-
+// getContext returns a context with a timeout
 func getContext() (context.Context, context.CancelFunc) {
 	return context.WithTimeout(context.Background(), rpcTimeout)
 }
@@ -110,3 +111,6 @@ func (cosigner *RemoteCosigner) SetEphemeralSecretPartsAndSign(
 		Signature:       res.GetSignature(),
 	}, nil
 }
+
+// _ is a type assertion to ensure that RemoteCosigner implements the Cosigner interface
+var _ Cosigner = (*RemoteCosigner)(nil)

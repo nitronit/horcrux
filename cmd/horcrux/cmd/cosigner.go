@@ -192,22 +192,22 @@ func StartCosignerCmd() *cobra.Command {
 				})
 			}
 
-			total := len(cfg.Cosigners) + 1
-			localCosignerConfig := thresholdsigner.LocalCosignerConfig{
-				CosignerKey: key,
-				SignState:   &shareSignState,
-				RsaKey:      key.RSAKey,
-				Address:     cfg.ListenAddress,
-				Peers:       peers,
-				Total:       uint8(total),
-				Threshold:   cfg.CosignerThreshold,
-			}
+			// total := len(cfg.Cosigners) + 1
+			// localCosignerConfig := thresholdsigner.LocalCosignerConfig{
+			// 	CosignerKey: key,
+			// 	SignState:   &shareSignState,
+			// 	RsaKey:      key.RSAKey,
+			// 	Address:     cfg.ListenAddress,
+			// 	Peers:       peers,
+			// 	Total:       uint8(total),
+			// 	Threshold:   cfg.CosignerThreshold,
+			// }
 
 			localCosigner := thresholdsigner.NewLocalCosigner(
-				localCosignerConfig.Address,
-				localCosignerConfig.Peers,
-				localCosignerConfig.SignState,
-				thresholdSigner)
+				cfg.ListenAddress, // localCosignerConfig.Address,
+				peers,             // localCosignerConfig.Peers,
+				&shareSignState,   // localCosignerConfig.SignState,
+				thresholdSigner)   // ThresholdSigner Interface)
 
 			timeout, err := time.ParseDuration(config.Config.CosignerConfig.Timeout)
 			if err != nil {

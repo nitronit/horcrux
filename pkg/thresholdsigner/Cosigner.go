@@ -1,6 +1,7 @@
 package thresholdsigner
 
 import (
+	"crypto/rsa"
 	"time"
 
 	proto "github.com/strangelove-ventures/horcrux/pkg/proto"
@@ -13,7 +14,6 @@ type HRSKey struct {
 	Step   int8
 }
 
-// TODO Change to anonymous fields, would remove some duplication?
 // HRSTKey Height Round Step Time to keep track of ....?
 type HRSTKey struct {
 	Height    int64
@@ -22,7 +22,8 @@ type HRSTKey struct {
 	Timestamp int64
 }
 
-// HRSTKeyFromProto Gets TODO: Explain more
+// HRSTKeyFromProto Gets
+// TODO: Explain more
 func HRSTKeyFromProto(hrs *proto.HRST) HRSTKey {
 	return HRSTKey{
 		Height:    hrs.GetHeight(),
@@ -135,7 +136,7 @@ func CosignerEphemeralSecretPartsFromProto(
 	return
 }
 
-// Block and toProto is temporary.
+// Duplicate use of Block and toProto is temporary.
 type Block struct {
 	Height    int64
 	Round     int64
@@ -192,6 +193,19 @@ type CosignerSetEphemeralSecretPartsAndSignRequest struct {
 	EncryptedSecrets []CosignerEphemeralSecretPart
 	HRST             HRSTKey
 	SignBytes        []byte
+}
+
+type CosignerPeer struct {
+	ID        int
+	PublicKey rsa.PublicKey
+}
+
+type CosignerGetEphemeralSecretPartRequest struct {
+	ID        int
+	Height    int64
+	Round     int64
+	Step      int8
+	Timestamp time.Time
 }
 
 // Cosigner interface is a set of methods for an m-of-n threshold signature.

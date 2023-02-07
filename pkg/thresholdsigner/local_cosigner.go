@@ -1,35 +1,10 @@
 package thresholdsigner
 
 import (
-	"crypto/rsa"
 	"time"
 
 	metrics "github.com/strangelove-ventures/horcrux/pkg/metrics"
 )
-
-type CosignerPeer struct {
-	ID        int
-	PublicKey rsa.PublicKey
-}
-
-type CosignerGetEphemeralSecretPartRequest struct {
-	ID        int
-	Height    int64
-	Round     int64
-	Step      int8
-	Timestamp time.Time
-}
-
-type LocalCosignerConfig struct {
-	CosignerKey CosignerKey
-	SignState   *SignState
-	RsaKey      rsa.PrivateKey
-	Peers       []CosignerPeer
-	Address     string
-	RaftAddress string
-	Total       uint8
-	Threshold   uint8
-}
 
 // LocalCosigner responds to sign requests using their share key
 // LocalCosigner "embeds" the Threshold signer.
@@ -135,7 +110,10 @@ func (cosigner *LocalCosigner) SetEphemeralSecretPartsAndSign(
 			return nil, err
 		}
 	}
-
-	res, err := cosigner.thresholdSigner.Sign(CosignerSignRequest{req.SignBytes}, cosigner.LastSignStateWrapper)
+	// TODO change this to return individual fields
+	res, err := cosigner.thresholdSigner.Sign(req.SignBytes, cosigner.LastSignStateWrapper)
 	return &res, err
 }
+
+// _ is a type assertion to ensure that LocalCosigner implements the Cosigner interface
+var _ Cosigner = (*LocalCosigner)(nil)
