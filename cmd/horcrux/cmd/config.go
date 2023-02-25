@@ -3,7 +3,6 @@ package cmd
 import (
 	"errors"
 	"fmt"
-	"github.com/strangelove-ventures/horcrux/pkg/signer"
 	"net"
 	"net/url"
 	"os"
@@ -11,6 +10,10 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/strangelove-ventures/horcrux/pkg/cosigner"
+	"github.com/strangelove-ventures/horcrux/pkg/signer"
+	"github.com/strangelove-ventures/horcrux/pkg/state"
 
 	"github.com/spf13/cobra"
 	"github.com/strangelove-ventures/horcrux/client"
@@ -150,13 +153,13 @@ func initCmd() *cobra.Command {
 			}
 
 			// initialize state/{chainid}_priv_validator_state.json file
-			if _, err = thresholdsigner.LoadOrCreateSignState(config.privValStateFile(cid)); err != nil {
+			if _, err = state.LoadOrCreateSignState(config.privValStateFile(cid)); err != nil {
 				return err
 			}
 
 			// if node is a cosigner initialize state/{chainid}_priv_validator_state.json file
 			if cs {
-				if _, err = thresholdsigner.LoadOrCreateSignState(config.shareStateFile(cid)); err != nil {
+				if _, err = state.LoadOrCreateSignState(config.shareStateFile(cid)); err != nil {
 					return err
 				}
 			}
@@ -578,20 +581,20 @@ func (c *DiskConfig) CosignerPeers() (out []signer.CosignerConfig) {
 }
 
 func (c *DiskConfig) KeyAndThresholdSigner(logger tmlog.Logger) (
-	thresholdsigner.CosignerKey, thresholdsigner.ThresholdSigner, error) {
+	state.CosignerKey, cosigner.ThresholdSigner, error) {
 	switch c.CosignerConfig.SignerType {
 	case "hsm", "HSM":
 		logger.Info("Cosigning with HSM")
-		return thresholdsigner.CosignerKey{}, thresholdsigner.NewThresholdSignerHSM(), nil
+		return state.CosignerKey{}, thresholdsigner.NewThresholdSignerHSM(), nil
 	default:
 
 		keyFilePath := config.keyFilePath(true)
 		if _, err := os.Stat(keyFilePath); os.IsNotExist(err) {
-			return thresholdsigner.CosignerKey{}, nil, fmt.Errorf("private key share doesn't exist at path(%s)", keyFilePath)
+			return state.CosignerKey{}, nil, fmt.Errorf("private key share doesn't exist at path(%s)", keyFilePath)
 		}
-		key, err := thresholdsigner.LoadCosignerKey(keyFilePath)
+		key, err := state.LoadCosignerKey(keyFilePath)
 		if err != nil {
-			return thresholdsigner.CosignerKey{}, nil, fmt.Errorf("error reading cosigner key: %w", err)
+			return state.CosignerKey{}, nil, fmt.Errorf("error reading cosigner key: %w", err)
 		}
 		logger.Info("Cosigning with soft key",
 			"file", keyFilePath,

@@ -11,10 +11,11 @@ import (
 	"time"
 
 	"github.com/strangelove-ventures/horcrux/pkg/signer"
+	"github.com/strangelove-ventures/horcrux/pkg/state"
 
 	"github.com/cosmos/cosmos-sdk/types/bech32"
 	"github.com/spf13/cobra"
-	"github.com/strangelove-ventures/horcrux/pkg/thresholdsigner"
+	coosigner "github.com/strangelove-ventures/horcrux/pkg/cosigner"
 	tmlog "github.com/tendermint/tendermint/libs/log"
 	tmService "github.com/tendermint/tendermint/libs/service"
 	"github.com/tendermint/tendermint/types"
@@ -51,7 +52,7 @@ func AddressCmd() *cobra.Command {
 				return
 			}
 
-			key, err := thresholdsigner.LoadCosignerKey(config.keyFilePath(true))
+			key, err := state.LoadCosignerKey(config.keyFilePath(true))
 			if err != nil {
 				return fmt.Errorf("error reading cosigner key: %s", err)
 			}
@@ -157,28 +158,28 @@ func StartCosignerCmd() *cobra.Command {
 
 			// ok to auto initialize on disk since the cosigner share is the one that actually
 			// protects against double sign - this exists as a cache for the final signature
-			signState, err := thresholdsigner.LoadOrCreateSignState(config.privValStateFile(chainID))
+			signState, err := state.LoadOrCreateSignState(config.privValStateFile(chainID))
 			if err != nil {
 				panic(err)
 			}
 
 			// state for our cosigner share
 			// Not automatically initialized on disk to avoid double sign risk
-			shareSignState, err := thresholdsigner.LoadSignState(config.shareStateFile(chainID))
+			shareSignState, err := state.LoadSignState(config.shareStateFile(chainID))
 			if err != nil {
 				panic(err)
 			}
 
-			cosigners := []thresholdsigner.Cosigner{}
+			cosigners := []coosigner.Cosigner{}
 
 			// add ourselves as a peer so localcosigner can handle GetEphSecPart requests
-			peers := []thresholdsigner.CosignerPeer{{
+			peers := []state.CosignerPeer{{
 				ID:        key.ID,
 				PublicKey: key.RSAKey.PublicKey,
 			}}
 
 			for _, cosignerConfig := range cfg.Cosigners {
-				cosigner := thresholdsigner.NewRemoteCosigner(cosignerConfig.ID, cosignerConfig.Address)
+				cosigner := coosigner.NewRemoteCosigner(cosignerConfig.ID, cosignerConfig.Address)
 				cosigners = append(cosigners, cosigner)
 
 				if cosignerConfig.ID < 1 || cosignerConfig.ID > len(key.CosignerKeys) {
@@ -186,7 +187,7 @@ func StartCosignerCmd() *cobra.Command {
 				}
 
 				pubKey := key.CosignerKeys[cosignerConfig.ID-1]
-				peers = append(peers, thresholdsigner.CosignerPeer{
+				peers = append(peers, state.CosignerPeer{
 					ID:        cosigner.GetID(),
 					PublicKey: *pubKey,
 				})
@@ -203,7 +204,7 @@ func StartCosignerCmd() *cobra.Command {
 			// 	Threshold:   cfg.CosignerThreshold,
 			// }
 
-			localCosigner := thresholdsigner.NewLocalCosigner(
+			localCosigner := coosigner.NewLocalCosigner(
 				cfg.ListenAddress, // localCosignerConfig.Address,
 				peers,             // localCosignerConfig.Peers,
 				&shareSignState,   // localCosignerConfig.SignState,

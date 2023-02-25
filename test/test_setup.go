@@ -4,12 +4,13 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"github.com/strangelove-ventures/horcrux/pkg/signer"
 	"net"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/strangelove-ventures/horcrux/pkg/signer"
 
 	"github.com/cosmos/cosmos-sdk/types"
 	"github.com/ory/dockertest"

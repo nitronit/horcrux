@@ -7,7 +7,6 @@ import (
 	"crypto/sha256"
 	"errors"
 	"fmt"
-	"github.com/strangelove-ventures/horcrux/pkg/signer"
 	"math/big"
 	"net"
 	"os"
@@ -20,6 +19,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/strangelove-ventures/horcrux/pkg/signer"
+	"github.com/strangelove-ventures/horcrux/pkg/state"
+
 	"github.com/avast/retry-go"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
@@ -30,7 +32,6 @@ import (
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	"github.com/ory/dockertest"
 	"github.com/ory/dockertest/docker"
-	"github.com/strangelove-ventures/horcrux/pkg/thresholdsigner"
 	tmconfig "github.com/tendermint/tendermint/config"
 	tmBytes "github.com/tendermint/tendermint/libs/bytes"
 	"github.com/tendermint/tendermint/p2p"
@@ -908,7 +909,7 @@ func (tn TestNodes) WaitForHeight(height int64) error {
 }
 
 func (tn *TestNode) GetPrivVal() (privval.FilePVKey, error) {
-	return thresholdsigner.ReadPrivValidatorFile(tn.privValKeyPath())
+	return state.ReadPrivValidatorFile(tn.privValKeyPath())
 }
 
 func (tn *TestNode) privValKeyPath() string {

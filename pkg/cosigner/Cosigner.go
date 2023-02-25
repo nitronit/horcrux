@@ -18,5 +18,6 @@ type Cosigner interface {
 	GetEphemeralSecretParts(hrst state.HRSTKey) (*state.CosignerEphemeralSecretPartsResponse, error)
 
 	// SetEphemeralSecretPartsAndSign sign the requested bytes
-	SetEphemeralSecretPartsAndSign(req state.CosignerSetEphemeralSecretPartsAndSignRequest) (*state.CosignerSignResponse, error)
+	SetEphemeralSecretPartsAndSign(req state.CosignerSetEphemeralSecretPartsAndSignRequest) (*state.CosignerSignResponse,
+		error)
 }

@@ -1,8 +1,12 @@
 package thresholdsigner
 
-import "github.com/strangelove-ventures/horcrux/pkg/state"
+import (
+	"time"
 
-func NewThresholdSignerHSM() ThresholdSignerHSM {
+	"github.com/strangelove-ventures/horcrux/pkg/state"
+)
+
+func NewThresholdSignerHSM() *ThresholdSignerHSM {
 	panic("Not Implemented")
 }
 
@@ -17,7 +21,7 @@ func (hsmSigner *ThresholdSignerHSM) Type() string {
 
 // Implements ThresholdSigner
 func (hsmSigner *ThresholdSignerHSM) DealShares(
-	req state.CosignerGetEphemeralSecretPartRequest) (HrsMetadata, error) {
+	height int64, round int64, step int8, timestamp time.Time) (HrsMetadata, error) {
 	panic("Not Implemented")
 }
 
@@ -36,7 +40,7 @@ func (hsmSigner *ThresholdSignerHSM) GetEphemeralSecretPart(
 
 // Implements ThresholdSigner
 func (hsmSigner *ThresholdSignerHSM) Sign(
-	req state.CosignerSignRequest, m *LastSignStateWrapper) (state.CosignerSignResponse, error) {
+	signBytes []byte, m *LastSignStateWrapper) (state.CosignerSignResponse, error) {
 	panic("Not Implemented")
 }
 

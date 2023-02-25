@@ -20,7 +20,7 @@ import (
 	"strconv"
 
 	"github.com/spf13/cobra"
-	"github.com/strangelove-ventures/horcrux/pkg/thresholdsigner"
+	"github.com/strangelove-ventures/horcrux/pkg/state"
 	"github.com/tendermint/tendermint/libs/os"
 )
 
@@ -46,7 +46,7 @@ func CreateCosignerSharesCmd() *cobra.Command {
 				return fmt.Errorf("error parsing shares (%s): %w", shares, err)
 			}
 
-			csKeys, err := thresholdsigner.CreateCosignerSharesFromFile(args[0], t, n)
+			csKeys, err := state.CreateCosignerSharesFromFile(args[0], t, n)
 			if err != nil {
 				return err
 			}
@@ -55,7 +55,7 @@ func CreateCosignerSharesCmd() *cobra.Command {
 			cmd.SilenceUsage = true
 
 			for _, c := range csKeys {
-				if err = thresholdsigner.WriteCosignerShareFile(c, fmt.Sprintf("private_share_%d.json", c.ID)); err != nil {
+				if err = state.WriteCosignerShareFile(c, fmt.Sprintf("private_share_%d.json", c.ID)); err != nil {
 					return err
 				}
 				fmt.Printf("Created Share %d\n", c.ID)
