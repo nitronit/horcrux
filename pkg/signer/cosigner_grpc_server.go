@@ -6,12 +6,13 @@ import (
 	"time"
 
 	"github.com/hashicorp/raft"
+	"github.com/strangelove-ventures/horcrux/pkg/cosigner"
 	proto "github.com/strangelove-ventures/horcrux/pkg/proto"
-	"github.com/strangelove-ventures/horcrux/pkg/thresholdsigner"
+	state "github.com/strangelove-ventures/horcrux/pkg/state"
 )
 
 type CosignerGRPCServer struct {
-	cosigner                              *thresholdsigner.LocalCosigner
+	cosigner                              *cosigner.LocalCosigner
 	thresholdValidator                    *ThresholdValidator
 	raftStore                             *RaftStore
 	proto.UnimplementedCosignerGRPCServer // embedding UnimplementedCosignerGRPCServer
@@ -40,9 +41,9 @@ func (rpc *CosignerGRPCServer) SetEphemeralSecretPartsAndSign(
 	ctx context.Context,
 	req *proto.CosignerGRPCSetEphemeralSecretPartsAndSignRequest,
 ) (*proto.CosignerGRPCSetEphemeralSecretPartsAndSignResponse, error) {
-	res, err := rpc.cosigner.SetEphemeralSecretPartsAndSign(thresholdsigner.CosignerSetEphemeralSecretPartsAndSignRequest{
-		EncryptedSecrets: thresholdsigner.CosignerEphemeralSecretPartsFromProto(req.GetEncryptedSecrets()),
-		HRST:             thresholdsigner.HRSTKeyFromProto(req.GetHrst()),
+	res, err := rpc.cosigner.SetEphemeralSecretPartsAndSign(state.CosignerSetEphemeralSecretPartsAndSignRequest{
+		EncryptedSecrets: state.CosignerEphemeralSecretPartsFromProto(req.GetEncryptedSecrets()),
+		HRST:             state.HRSTKeyFromProto(req.GetHrst()),
 		SignBytes:        req.GetSignBytes(),
 	})
 	if err != nil {
@@ -60,12 +61,12 @@ func (rpc *CosignerGRPCServer) GetEphemeralSecretParts(
 	ctx context.Context,
 	req *proto.CosignerGRPCGetEphemeralSecretPartsRequest,
 ) (*proto.CosignerGRPCGetEphemeralSecretPartsResponse, error) {
-	res, err := rpc.cosigner.GetEphemeralSecretParts(thresholdsigner.HRSTKeyFromProto(req.GetHrst()))
+	res, err := rpc.cosigner.GetEphemeralSecretParts(state.HRSTKeyFromProto(req.GetHrst()))
 	if err != nil {
 		return nil, err
 	}
 	return &proto.CosignerGRPCGetEphemeralSecretPartsResponse{
-		EncryptedSecrets: thresholdsigner.CosignerEphemeralSecretParts(res.EncryptedSecrets).ToProto(),
+		EncryptedSecrets: state.CosignerEphemeralSecretParts(res.EncryptedSecrets).ToProto(),
 	}, nil
 }
 

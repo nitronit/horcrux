@@ -1,9 +1,11 @@
-package thresholdsigner
+package cosigner
 
 import (
 	"time"
 
 	metrics "github.com/strangelove-ventures/horcrux/pkg/metrics"
+	"github.com/strangelove-ventures/horcrux/pkg/state"
+	"github.com/strangelove-ventures/horcrux/pkg/thresholdsigner"
 )
 
 // LocalCosigner responds to sign requests using their share key
@@ -11,20 +13,20 @@ import (
 // LocalCosigner maintains a watermark to avoid double-signing via the embedded LastSignStateWrapper.
 // LocalCosigner signing is thread safe by embedding *LastSignStateWrapper which contains LastSignStateMutex sync.Mutex.
 type LocalCosigner struct {
-	LastSignStateWrapper *LastSignStateWrapper
+	LastSignStateWrapper *thresholdsigner.LastSignStateWrapper
 	address              string
-	Peers                map[int]CosignerPeer
-	thresholdSigner      ThresholdSigner
+	Peers                map[int]state.CosignerPeer
+	thresholdSigner      ThresholdSigner // Interface
 }
 
 // Initialize a Local Cosigner
 func NewLocalCosigner(
 	address string,
-	peers []CosignerPeer,
-	signState *SignState,
+	peers []state.CosignerPeer,
+	signState *state.SignState,
 	thresholdSigner ThresholdSigner) *LocalCosigner {
 
-	LastSignStateWrapper := LastSignStateWrapper{
+	LastSignStateWrapper := thresholdsigner.LastSignStateWrapper{
 		// LastSignStateMutex  doesnt need to be initialized. i.e LastSignStateMutex: sync.Mutex{},
 		LastSignState: signState,
 	}
@@ -33,7 +35,7 @@ func NewLocalCosigner(
 		LastSignStateWrapper: &LastSignStateWrapper,
 		address:              address,
 		thresholdSigner:      thresholdSigner,
-		Peers:                make(map[int]CosignerPeer),
+		Peers:                make(map[int]state.CosignerPeer),
 	}
 
 	for _, peer := range peers {
@@ -42,9 +44,9 @@ func NewLocalCosigner(
 	return cosigner
 }
 
-func (cosigner *LocalCosigner) SaveLastSignedState(signState SignStateConsensus) error {
+func (cosigner *LocalCosigner) SaveLastSignedState(signState state.SignStateConsensus) error {
 	return cosigner.LastSignStateWrapper.LastSignState.Save(
-		signState, &cosigner.LastSignStateWrapper.lastSignStateMutex, true)
+		signState, &cosigner.LastSignStateWrapper.LastSignStateMutex, true)
 }
 
 // GetID returns the id of the cosigner, via the thresholdSigner getter
@@ -63,17 +65,17 @@ func (cosigner *LocalCosigner) GetAddress() string {
 // GetEphemeralSecretParts
 // // Implements the Cosigner interface from Cosigner.go
 func (cosigner *LocalCosigner) GetEphemeralSecretParts(
-	hrst HRSTKey) (*CosignerEphemeralSecretPartsResponse, error) {
+	hrst state.HRSTKey) (*state.CosignerEphemeralSecretPartsResponse, error) {
 	metrics.MetricsTimeKeeper.SetPreviousLocalEphemeralShare(time.Now())
 
-	res := &CosignerEphemeralSecretPartsResponse{
-		EncryptedSecrets: make([]CosignerEphemeralSecretPart, 0, len(cosigner.Peers)-1),
+	res := &state.CosignerEphemeralSecretPartsResponse{
+		EncryptedSecrets: make([]state.CosignerEphemeralSecretPart, 0, len(cosigner.Peers)-1),
 	}
 	for _, peer := range cosigner.Peers {
 		if peer.ID == cosigner.GetID() {
 			continue
 		}
-		secretPart, err := cosigner.thresholdSigner.GetEphemeralSecretPart(CosignerGetEphemeralSecretPartRequest{
+		secretPart, err := cosigner.thresholdSigner.GetEphemeralSecretPart(state.CosignerGetEphemeralSecretPartRequest{
 			ID:        peer.ID,
 			Height:    hrst.Height,
 			Round:     hrst.Round,
@@ -94,9 +96,9 @@ func (cosigner *LocalCosigner) GetEphemeralSecretParts(
 // SetEphemeralSecretPartsAndSign
 // Implements the Cosigner interface from Cosigner.go
 func (cosigner *LocalCosigner) SetEphemeralSecretPartsAndSign(
-	req CosignerSetEphemeralSecretPartsAndSignRequest) (*CosignerSignResponse, error) {
+	req state.CosignerSetEphemeralSecretPartsAndSignRequest) (*state.CosignerSignResponse, error) {
 	for _, secretPart := range req.EncryptedSecrets {
-		err := cosigner.thresholdSigner.SetEphemeralSecretPart(CosignerSetEphemeralSecretPartRequest{
+		err := cosigner.thresholdSigner.SetEphemeralSecretPart(state.CosignerSetEphemeralSecretPartRequest{
 			SourceID:                       secretPart.SourceID,
 			SourceEphemeralSecretPublicKey: secretPart.SourceEphemeralSecretPublicKey,
 			EncryptedSharePart:             secretPart.EncryptedSharePart,

@@ -5,9 +5,10 @@ import (
 	"errors"
 	"time"
 
+	"github.com/strangelove-ventures/horcrux/pkg/cosigner"
 	metrics "github.com/strangelove-ventures/horcrux/pkg/metrics"
 	proto "github.com/strangelove-ventures/horcrux/pkg/proto"
-	"github.com/strangelove-ventures/horcrux/pkg/thresholdsigner"
+	state "github.com/strangelove-ventures/horcrux/pkg/state"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
@@ -28,7 +29,7 @@ func (f *fsm) shouldRetain(key string) bool {
 }
 
 func (f *fsm) handleLSSEvent(value string) {
-	lss := &thresholdsigner.SignStateConsensus{}
+	lss := &state.SignStateConsensus{}
 	err := json.Unmarshal([]byte(value), lss)
 	if err != nil {
 		f.logger.Error("LSS Unmarshal Error", err.Error())
@@ -58,14 +59,14 @@ func (s *RaftStore) getLeaderGRPCClient() (proto.CosignerGRPCClient, *grpc.Clien
 	return proto.NewCosignerGRPCClient(conn), conn, nil
 }
 
-func (s *RaftStore) LeaderSignBlock(req thresholdsigner.CosignerSignBlockRequest) (
-	*thresholdsigner.CosignerSignBlockResponse, error) {
+func (s *RaftStore) LeaderSignBlock(req state.CosignerSignBlockRequest) (
+	*state.CosignerSignBlockResponse, error) {
 	client, conn, err := s.getLeaderGRPCClient()
 	if err != nil {
 		return nil, err
 	}
 	defer conn.Close()
-	context, cancelFunc := thresholdsigner.GetContext()
+	context, cancelFunc := cosigner.GetContext()
 	defer cancelFunc()
 	res, err := client.SignBlock(context, &proto.CosignerGRPCSignBlockRequest{
 		ChainID: req.ChainID,
@@ -74,7 +75,7 @@ func (s *RaftStore) LeaderSignBlock(req thresholdsigner.CosignerSignBlockRequest
 	if err != nil {
 		return nil, err
 	}
-	return &thresholdsigner.CosignerSignBlockResponse{
+	return &state.CosignerSignBlockResponse{
 		Signature: res.GetSignature(),
 	}, nil
 }

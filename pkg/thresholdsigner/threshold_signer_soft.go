@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/strangelove-ventures/horcrux/pkg/state"
 	tmcryptoed25519 "github.com/tendermint/tendermint/crypto/ed25519"
 	tmjson "github.com/tendermint/tendermint/libs/json"
 	"gitlab.com/unit410/edwards25519"
@@ -20,20 +21,20 @@ import (
 // ThresholdSignerSoft is the implementation of a soft sign signer at the local level.
 type ThresholdSignerSoft struct {
 	pubKeyBytes []byte
-	key         CosignerKey
+	key         state.CosignerKey
 	// total signers
 	total     uint8
 	threshold uint8
 	// Height, Round, Step, Timestamp --> metadata
-	hrsMeta map[HRSTKey]HrsMetadata
+	hrsMeta map[state.HRSTKey]HrsMetadata
 }
 
 // NewThresholdSignerSoft constructs a ThresholdSigner
 // that signs using the local key share file.
-func NewThresholdSignerSoft(key CosignerKey, threshold, total uint8) ThresholdSigner {
+func NewThresholdSignerSoft(key state.CosignerKey, threshold, total uint8) *ThresholdSignerSoft {
 	softSigner := &ThresholdSignerSoft{
 		key:       key,
-		hrsMeta:   make(map[HRSTKey]HrsMetadata),
+		hrsMeta:   make(map[state.HRSTKey]HrsMetadata),
 		total:     total,
 		threshold: threshold,
 	}
@@ -59,14 +60,14 @@ func (softSigner *ThresholdSignerSoft) GetID() (int, error) {
 
 // Implements ThresholdSigner in threshold_signer.go
 func (softSigner *ThresholdSignerSoft) Sign(
-	signBytes []byte, m *LastSignStateWrapper) (CosignerSignResponse, error) {
-	m.lastSignStateMutex.Lock()
-	defer m.lastSignStateMutex.Unlock()
+	signBytes []byte, m *LastSignStateWrapper) (state.CosignerSignResponse, error) {
+	m.LastSignStateMutex.Lock()
+	defer m.LastSignStateMutex.Unlock()
 
-	res := CosignerSignResponse{}
+	res := state.CosignerSignResponse{}
 	lss := m.LastSignState
 
-	hrst, err := UnpackHRST(signBytes)
+	hrst, err := state.UnpackHRST(signBytes)
 	if err != nil {
 		return res, err
 	}
@@ -124,7 +125,7 @@ func (softSigner *ThresholdSignerSoft) Sign(
 		signBytes, softSigner.key.ShareKey, ephemeralShare, softSigner.pubKeyBytes, ephemeralPublic)
 
 	m.LastSignState.EphemeralPublic = ephemeralPublic
-	err = m.LastSignState.Save(SignStateConsensus{
+	err = m.LastSignState.Save(state.SignStateConsensus{
 		Height:    hrst.Height,
 		Round:     hrst.Round,
 		Step:      hrst.Step,
@@ -132,7 +133,7 @@ func (softSigner *ThresholdSignerSoft) Sign(
 		SignBytes: signBytes,
 	}, nil, true)
 	if err != nil {
-		var isSameHRSError *SameHRSError
+		var isSameHRSError *state.SameHRSError
 		if !errors.As(err, &isSameHRSError) {
 			return res, err
 		}
@@ -154,7 +155,7 @@ func (softSigner *ThresholdSignerSoft) Sign(
 // Implements ThresholdSigner from threshold_signer.go
 func (softSigner *ThresholdSignerSoft) DealShares(
 	height int64, round int64, step int8, timestamp time.Time) (HrsMetadata, error) {
-	hrsKey := HRSTKey{
+	hrsKey := state.HRSTKey{
 		Height:    height,
 		Round:     round,
 		Step:      step,
@@ -190,16 +191,16 @@ func (softSigner *ThresholdSignerSoft) DealShares(
 // The ephemeral secret part is encrypted for the receiver
 // Implements ThresholdSigner interface from threshold_signer.go
 func (softSigner *ThresholdSignerSoft) GetEphemeralSecretPart(
-	req CosignerGetEphemeralSecretPartRequest, m *LastSignStateWrapper, peers map[int]CosignerPeer) (
-	CosignerEphemeralSecretPart, error) {
+	req state.CosignerGetEphemeralSecretPartRequest, m *LastSignStateWrapper, peers map[int]state.CosignerPeer) (
+	state.CosignerEphemeralSecretPart, error) {
 
-	res := CosignerEphemeralSecretPart{}
+	res := state.CosignerEphemeralSecretPart{}
 
 	// protects the meta map
-	m.lastSignStateMutex.Lock()
-	defer m.lastSignStateMutex.Unlock()
+	m.LastSignStateMutex.Lock()
+	defer m.LastSignStateMutex.Unlock()
 
-	hrst := HRSTKey{
+	hrst := state.HRSTKey{
 		Height:    req.Height,
 		Round:     req.Round,
 		Step:      req.Step,
@@ -269,14 +270,14 @@ func (softSigner *ThresholdSignerSoft) GetEphemeralSecretPart(
 // Store an ephemeral secret share part provided by another cosigner (signer)
 // Implements ThresholdSigner interface in threshold_signer.go
 func (softSigner *ThresholdSignerSoft) SetEphemeralSecretPart(
-	req CosignerSetEphemeralSecretPartRequest, m *LastSignStateWrapper, peers map[int]CosignerPeer) error {
+	req state.CosignerSetEphemeralSecretPartRequest, m *LastSignStateWrapper, peers map[int]state.CosignerPeer) error {
 
 	// Verify the source signature
 	if req.SourceSig == nil {
 		return errors.New("SourceSig field is required")
 	}
 
-	digestMsg := CosignerEphemeralSecretPart{
+	digestMsg := state.CosignerEphemeralSecretPart{
 		SourceID: req.SourceID,
 		// DestinationID:                  0,
 		SourceEphemeralSecretPublicKey: req.SourceEphemeralSecretPublicKey,
@@ -303,10 +304,10 @@ func (softSigner *ThresholdSignerSoft) SetEphemeralSecretPart(
 	}
 
 	// protects the meta map
-	m.lastSignStateMutex.Lock()
-	defer m.lastSignStateMutex.Unlock()
+	m.LastSignStateMutex.Lock()
+	defer m.LastSignStateMutex.Unlock()
 
-	hrst := HRSTKey{
+	hrst := state.HRSTKey{
 		Height:    req.Height,
 		Round:     req.Round,
 		Step:      req.Step,
@@ -339,4 +340,4 @@ func (softSigner *ThresholdSignerSoft) SetEphemeralSecretPart(
 }
 
 // _ is a type assertion to ensure that ThresholdSignerSoft implements the ThresholdSigner interface
-var _ ThresholdSigner = (*ThresholdSignerSoft)(nil)
+// var _ ThresholdSigner = (*ThresholdSignerSoft)(nil)

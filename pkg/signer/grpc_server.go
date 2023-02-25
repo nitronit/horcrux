@@ -6,12 +6,13 @@ import (
 	"time"
 
 	"github.com/hashicorp/raft"
+	"github.com/strangelove-ventures/horcrux/pkg/cosigner"
 	proto "github.com/strangelove-ventures/horcrux/pkg/proto"
-	threholdsigner "github.com/strangelove-ventures/horcrux/pkg/thresholdsigner"
+	state "github.com/strangelove-ventures/horcrux/pkg/state"
 )
 
 type GRPCServer struct {
-	cosigner           *threholdsigner.LocalCosigner
+	cosigner           *cosigner.LocalCosigner
 	thresholdValidator *ThresholdValidator
 	raftStore          *RaftStore
 	proto.UnimplementedCosignerGRPCServer
@@ -39,9 +40,9 @@ func (rpc *GRPCServer) SetEphemeralSecretPartsAndSign(
 	ctx context.Context,
 	req *proto.CosignerGRPCSetEphemeralSecretPartsAndSignRequest,
 ) (*proto.CosignerGRPCSetEphemeralSecretPartsAndSignResponse, error) {
-	res, err := rpc.cosigner.SetEphemeralSecretPartsAndSign(threholdsigner.CosignerSetEphemeralSecretPartsAndSignRequest{
-		EncryptedSecrets: threholdsigner.CosignerEphemeralSecretPartsFromProto(req.GetEncryptedSecrets()),
-		HRST:             threholdsigner.HRSTKeyFromProto(req.GetHrst()),
+	res, err := rpc.cosigner.SetEphemeralSecretPartsAndSign(state.CosignerSetEphemeralSecretPartsAndSignRequest{
+		EncryptedSecrets: state.CosignerEphemeralSecretPartsFromProto(req.GetEncryptedSecrets()),
+		HRST:             state.HRSTKeyFromProto(req.GetHrst()),
 		SignBytes:        req.GetSignBytes(),
 	})
 	if err != nil {
@@ -64,12 +65,12 @@ func (rpc *GRPCServer) GetEphemeralSecretParts(
 	ctx context.Context,
 	req *proto.CosignerGRPCGetEphemeralSecretPartsRequest,
 ) (*proto.CosignerGRPCGetEphemeralSecretPartsResponse, error) {
-	res, err := rpc.cosigner.GetEphemeralSecretParts(threholdsigner.HRSTKeyFromProto(req.GetHrst()))
+	res, err := rpc.cosigner.GetEphemeralSecretParts(state.HRSTKeyFromProto(req.GetHrst()))
 	if err != nil {
 		return nil, err
 	}
 	return &proto.CosignerGRPCGetEphemeralSecretPartsResponse{
-		EncryptedSecrets: threholdsigner.CosignerEphemeralSecretParts(res.EncryptedSecrets).ToProto(),
+		EncryptedSecrets: state.CosignerEphemeralSecretParts(res.EncryptedSecrets).ToProto(),
 	}, nil
 }
 

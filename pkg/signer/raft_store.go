@@ -23,8 +23,8 @@ import (
 	"github.com/Jille/raftadmin"
 	"github.com/hashicorp/raft"
 	boltdb "github.com/hashicorp/raft-boltdb/v2"
+	"github.com/strangelove-ventures/horcrux/pkg/cosigner"
 	proto "github.com/strangelove-ventures/horcrux/pkg/proto"
-	thresholdsigner "github.com/strangelove-ventures/horcrux/pkg/thresholdsigner"
 	"github.com/tendermint/tendermint/libs/log"
 	"github.com/tendermint/tendermint/libs/service"
 	"google.golang.org/grpc"
@@ -50,7 +50,7 @@ type RaftStore struct {
 	RaftDir     string
 	RaftBind    string
 	RaftTimeout time.Duration
-	Peers       []thresholdsigner.Cosigner
+	Peers       []cosigner.Cosigner
 
 	mu sync.Mutex
 	m  map[string]string // The key-value store for the system.
@@ -58,7 +58,7 @@ type RaftStore struct {
 	raft *raft.Raft // The consensus mechanism
 
 	logger   log.Logger
-	cosigner *thresholdsigner.LocalCosigner
+	cosigner *cosigner.LocalCosigner
 	// TODO Take a look at this
 	thresholdValidator *ThresholdValidator
 }
@@ -66,7 +66,7 @@ type RaftStore struct {
 // New returns a new Store.
 func NewRaftStore(
 	nodeID string, directory string, bindAddress string, timeout time.Duration,
-	logger log.Logger, cosigner *thresholdsigner.LocalCosigner, raftPeers []thresholdsigner.Cosigner) *RaftStore {
+	logger log.Logger, cosigner *cosigner.LocalCosigner, raftPeers []cosigner.Cosigner) *RaftStore {
 	cosignerRaftStore := &RaftStore{
 		NodeID:      nodeID,
 		RaftDir:     directory,

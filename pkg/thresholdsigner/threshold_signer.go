@@ -2,8 +2,8 @@ package thresholdsigner
 
 import (
 	"sync"
-	"time"
 
+	"github.com/strangelove-ventures/horcrux/pkg/state"
 	tsed25519 "gitlab.com/unit410/threshold-ed25519/pkg"
 )
 
@@ -12,29 +12,13 @@ const (
 	SignerTypeHSM      = "HSM"
 )
 
-// Interface for the local signer whether it's a soft sign or HSM
-type ThresholdSigner interface {
-	Type() string
-
-	DealShares(height int64, round int64, step int8, timestamp time.Time) (HrsMetadata, error)
-
-	GetEphemeralSecretPart(req CosignerGetEphemeralSecretPartRequest, m *LastSignStateWrapper,
-		peers map[int]CosignerPeer) (CosignerEphemeralSecretPart, error)
-
-	SetEphemeralSecretPart(req CosignerSetEphemeralSecretPartRequest, m *LastSignStateWrapper,
-		peers map[int]CosignerPeer) error
-
-	Sign(signBytes []byte, m *LastSignStateWrapper) (CosignerSignResponse, error)
-
-	GetID() (int, error)
-}
 type LastSignStateWrapper struct {
-	// Signing is thread safe - lastSignStateMutex is used for putting locks so only one goroutine can r/w to the function
-	lastSignStateMutex sync.Mutex
+	// Signing is thread safe - LastSignStateMutex is used for putting locks so only one goroutine can r/w to the function
+	LastSignStateMutex sync.Mutex
 
 	// lastSignState stores the last sign state for a share we have fully signed
 	// incremented whenever we are asked to sign a share
-	LastSignState *SignState
+	LastSignState *state.SignState
 }
 
 // PeerMetadata holds the share and the ephermeral secret public key

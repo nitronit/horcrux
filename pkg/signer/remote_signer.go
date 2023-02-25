@@ -6,7 +6,7 @@ import (
 	"time"
 
 	metrics "github.com/strangelove-ventures/horcrux/pkg/metrics"
-	thresholdsigner "github.com/strangelove-ventures/horcrux/pkg/thresholdsigner"
+	state "github.com/strangelove-ventures/horcrux/pkg/state"
 	tmCryptoEd2219 "github.com/tendermint/tendermint/crypto/ed25519"
 	tmCryptoEncoding "github.com/tendermint/tendermint/crypto/encoding"
 	tmLog "github.com/tendermint/tendermint/libs/log"
@@ -107,7 +107,7 @@ func (rs *ReconnRemoteSigner) loop() {
 			return
 		}
 
-		req, err := thresholdsigner.ReadMsg(conn)
+		req, err := state.ReadMsg(conn)
 		if err != nil {
 			rs.Logger.Error("readMsg", "err", err)
 			conn.Close()
@@ -118,7 +118,7 @@ func (rs *ReconnRemoteSigner) loop() {
 		// handleRequest handles request errors. We always send back a response
 		res := rs.handleRequest(req)
 
-		err = thresholdsigner.WriteMsg(conn, res)
+		err = state.WriteMsg(conn, res)
 		if err != nil {
 			rs.Logger.Error("writeMsg", "err", err)
 			conn.Close()

@@ -9,6 +9,8 @@ import (
 	"testing"
 	"time"
 
+	coosigner "github.com/strangelove-ventures/horcrux/pkg/cosigner"
+	state "github.com/strangelove-ventures/horcrux/pkg/state"
 	thresholdsigner "github.com/strangelove-ventures/horcrux/pkg/thresholdsigner"
 	"github.com/stretchr/testify/require"
 	tmCryptoEd25519 "github.com/tendermint/tendermint/crypto/ed25519"
@@ -18,7 +20,7 @@ import (
 	tsed25519 "gitlab.com/unit410/threshold-ed25519/pkg"
 )
 
-func getMockRaftStore(cosigner thresholdsigner.Cosigner, tmpDir string) *RaftStore {
+func getMockRaftStore(cosigner coosigner.Cosigner, tmpDir string) *RaftStore {
 	return &RaftStore{
 		NodeID:      "1",
 		RaftDir:     tmpDir,
@@ -26,8 +28,8 @@ func getMockRaftStore(cosigner thresholdsigner.Cosigner, tmpDir string) *RaftSto
 		RaftTimeout: 1 * time.Second,
 		m:           make(map[string]string),
 		logger:      nil,
-		cosigner:    cosigner.(*thresholdsigner.LocalCosigner),
-		Peers:       []thresholdsigner.Cosigner{},
+		cosigner:    cosigner.(*coosigner.LocalCosigner),
+		Peers:       []coosigner.Cosigner{},
 	}
 }
 
@@ -42,7 +44,7 @@ func TestThresholdValidator2of2(t *testing.T) {
 	rsaKey2, err := rsa.GenerateKey(rand.Reader, bitSize)
 	require.NoError(t, err)
 
-	peers := []thresholdsigner.CosignerPeer{{
+	peers := []state.CosignerPeer{{
 		ID:        1,
 		PublicKey: rsaKey1.PublicKey,
 	}, {
@@ -56,7 +58,7 @@ func TestThresholdValidator2of2(t *testing.T) {
 	copy(privKeyBytes[:], privateKey[:])
 	secretShares := tsed25519.DealShares(tsed25519.ExpandSecret(privKeyBytes[:32]), threshold, total)
 
-	key1 := thresholdsigner.CosignerKey{
+	key1 := state.CosignerKey{
 		PubKey:   privateKey.PubKey(),
 		RSAKey:   *rsaKey1,
 		ShareKey: secretShares[0],
@@ -69,10 +71,10 @@ func TestThresholdValidator2of2(t *testing.T) {
 		_ = os.Remove(name)
 	}(stateFile1.Name())
 
-	signState1, err := thresholdsigner.LoadOrCreateSignState(stateFile1.Name())
+	signState1, err := state.LoadOrCreateSignState(stateFile1.Name())
 	require.NoError(t, err)
 
-	key2 := thresholdsigner.CosignerKey{
+	key2 := state.CosignerKey{
 		PubKey:   privateKey.PubKey(),
 		RSAKey:   *rsaKey2,
 		ShareKey: secretShares[1],
@@ -84,16 +86,16 @@ func TestThresholdValidator2of2(t *testing.T) {
 	defer func(name string) {
 		_ = os.Remove(name)
 	}(stateFile2.Name())
-	signState2, err := thresholdsigner.LoadOrCreateSignState(stateFile2.Name())
+	signState2, err := state.LoadOrCreateSignState(stateFile2.Name())
 	require.NoError(t, err)
 
 	localSigner1 := thresholdsigner.NewThresholdSignerSoft(key1, threshold, total)
-	cosigner1 := thresholdsigner.NewLocalCosigner("", peers, &signState1, localSigner1)
+	cosigner1 := coosigner.NewLocalCosigner("", peers, &signState1, localSigner1)
 
 	localSigner2 := thresholdsigner.NewThresholdSignerSoft(key2, threshold, total)
-	cosigner2 := thresholdsigner.NewLocalCosigner("", peers, &signState2, localSigner2)
+	cosigner2 := coosigner.NewLocalCosigner("", peers, &signState2, localSigner2)
 
-	thresholdPeers := make([]thresholdsigner.Cosigner, 0)
+	thresholdPeers := make([]coosigner.Cosigner, 0)
 	thresholdPeers = append(thresholdPeers, cosigner2)
 
 	tmpDir, _ := os.MkdirTemp("", "store_test")
@@ -165,7 +167,7 @@ func TestThresholdValidator3of3(t *testing.T) {
 	rsaKey3, err := rsa.GenerateKey(rand.Reader, bitSize)
 	require.NoError(t, err)
 
-	peers := []thresholdsigner.CosignerPeer{{
+	peers := []state.CosignerPeer{{
 		ID:        1,
 		PublicKey: rsaKey1.PublicKey,
 	}, {
@@ -182,7 +184,7 @@ func TestThresholdValidator3of3(t *testing.T) {
 	copy(privKeyBytes[:], privateKey[:])
 	secretShares := tsed25519.DealShares(tsed25519.ExpandSecret(privKeyBytes[:32]), threshold, total)
 
-	key1 := thresholdsigner.CosignerKey{
+	key1 := state.CosignerKey{
 		PubKey:   privateKey.PubKey(),
 		RSAKey:   *rsaKey1,
 		ShareKey: secretShares[0],
@@ -195,10 +197,10 @@ func TestThresholdValidator3of3(t *testing.T) {
 		_ = os.Remove(name)
 	}(stateFile1.Name())
 
-	signState1, err := thresholdsigner.LoadOrCreateSignState(stateFile1.Name())
+	signState1, err := state.LoadOrCreateSignState(stateFile1.Name())
 	require.NoError(t, err)
 
-	key2 := thresholdsigner.CosignerKey{
+	key2 := state.CosignerKey{
 		PubKey:   privateKey.PubKey(),
 		RSAKey:   *rsaKey2,
 		ShareKey: secretShares[1],
@@ -211,10 +213,10 @@ func TestThresholdValidator3of3(t *testing.T) {
 		_ = os.Remove(name)
 	}(stateFile2.Name())
 
-	signState2, err := thresholdsigner.LoadOrCreateSignState(stateFile2.Name())
+	signState2, err := state.LoadOrCreateSignState(stateFile2.Name())
 	require.NoError(t, err)
 
-	key3 := thresholdsigner.CosignerKey{
+	key3 := state.CosignerKey{
 		PubKey:   privateKey.PubKey(),
 		RSAKey:   *rsaKey3,
 		ShareKey: secretShares[2],
@@ -227,19 +229,19 @@ func TestThresholdValidator3of3(t *testing.T) {
 		_ = os.Remove(name)
 	}(stateFile3.Name())
 
-	signState3, err := thresholdsigner.LoadOrCreateSignState(stateFile3.Name())
+	signState3, err := state.LoadOrCreateSignState(stateFile3.Name())
 	require.NoError(t, err)
 
 	localSigner1 := thresholdsigner.NewThresholdSignerSoft(key1, threshold, total)
-	cosigner1 := thresholdsigner.NewLocalCosigner("", peers, &signState1, localSigner1)
+	cosigner1 := coosigner.NewLocalCosigner("", peers, &signState1, localSigner1)
 
 	localSigner2 := thresholdsigner.NewThresholdSignerSoft(key2, threshold, total)
-	cosigner2 := thresholdsigner.NewLocalCosigner("", peers, &signState2, localSigner2)
+	cosigner2 := coosigner.NewLocalCosigner("", peers, &signState2, localSigner2)
 
 	localSigner3 := thresholdsigner.NewThresholdSignerSoft(key3, threshold, total)
-	cosigner3 := thresholdsigner.NewLocalCosigner("", peers, &signState3, localSigner3)
+	cosigner3 := coosigner.NewLocalCosigner("", peers, &signState3, localSigner3)
 
-	thresholdPeers := make([]thresholdsigner.Cosigner, 0)
+	thresholdPeers := make([]coosigner.Cosigner, 0)
 	thresholdPeers = append(thresholdPeers, cosigner2, cosigner3)
 
 	tmpDir, _ := os.MkdirTemp("", "store_test")
@@ -298,7 +300,7 @@ func TestThresholdValidator2of3(t *testing.T) {
 	rsaKey3, err := rsa.GenerateKey(rand.Reader, bitSize)
 	require.NoError(t, err)
 
-	peers := []thresholdsigner.CosignerPeer{{
+	peers := []state.CosignerPeer{{
 		ID:        1,
 		PublicKey: rsaKey1.PublicKey,
 	}, {
@@ -315,7 +317,7 @@ func TestThresholdValidator2of3(t *testing.T) {
 	copy(privKeyBytes[:], privateKey[:])
 	secretShares := tsed25519.DealShares(tsed25519.ExpandSecret(privKeyBytes[:32]), threshold, total)
 
-	key1 := thresholdsigner.CosignerKey{
+	key1 := state.CosignerKey{
 		PubKey:   privateKey.PubKey(),
 		RSAKey:   *rsaKey1,
 		ShareKey: secretShares[0],
@@ -328,10 +330,10 @@ func TestThresholdValidator2of3(t *testing.T) {
 		_ = os.Remove(name)
 	}(stateFile1.Name())
 
-	signState1, err := thresholdsigner.LoadOrCreateSignState(stateFile1.Name())
+	signState1, err := state.LoadOrCreateSignState(stateFile1.Name())
 	require.NoError(t, err)
 
-	key2 := thresholdsigner.CosignerKey{
+	key2 := state.CosignerKey{
 		PubKey:   privateKey.PubKey(),
 		RSAKey:   *rsaKey2,
 		ShareKey: secretShares[1],
@@ -344,10 +346,10 @@ func TestThresholdValidator2of3(t *testing.T) {
 		_ = os.Remove(name)
 	}(stateFile2.Name())
 
-	signState2, err := thresholdsigner.LoadOrCreateSignState(stateFile2.Name())
+	signState2, err := state.LoadOrCreateSignState(stateFile2.Name())
 	require.NoError(t, err)
 
-	key3 := thresholdsigner.CosignerKey{
+	key3 := state.CosignerKey{
 		PubKey:   privateKey.PubKey(),
 		RSAKey:   *rsaKey3,
 		ShareKey: secretShares[2],
@@ -360,19 +362,152 @@ func TestThresholdValidator2of3(t *testing.T) {
 		_ = os.Remove(name)
 	}(stateFile3.Name())
 
-	signState3, err := thresholdsigner.LoadOrCreateSignState(stateFile3.Name())
+	signState3, err := state.LoadOrCreateSignState(stateFile3.Name())
 	require.NoError(t, err)
 
 	localSigner1 := thresholdsigner.NewThresholdSignerSoft(key1, threshold, total)
-	cosigner1 := thresholdsigner.NewLocalCosigner("", peers, &signState1, localSigner1)
+	cosigner1 := coosigner.NewLocalCosigner("", peers, &signState1, localSigner1)
 
 	localSigner2 := thresholdsigner.NewThresholdSignerSoft(key2, threshold, total)
-	cosigner2 := thresholdsigner.NewLocalCosigner("", peers, &signState2, localSigner2)
+	cosigner2 := coosigner.NewLocalCosigner("", peers, &signState2, localSigner2)
 
 	localSigner3 := thresholdsigner.NewThresholdSignerSoft(key3, threshold, total)
-	cosigner3 := thresholdsigner.NewLocalCosigner("", peers, &signState3, localSigner3)
+	cosigner3 := coosigner.NewLocalCosigner("", peers, &signState3, localSigner3)
 
-	thresholdPeers := make([]thresholdsigner.Cosigner, 0)
+	thresholdPeers := make([]coosigner.Cosigner, 0)
+	thresholdPeers = append(thresholdPeers, cosigner2, cosigner3)
+
+	tmpDir, _ := os.MkdirTemp("", "store_test")
+	defer func(path string) {
+		_ = os.RemoveAll(path)
+	}(tmpDir)
+
+	raftStore := getMockRaftStore(cosigner1, tmpDir)
+
+	thresholdValidatorOpt := ThresholdValidatorOpt{
+		Pubkey:    privateKey.PubKey(),
+		Threshold: int(threshold),
+		SignState: signState1,
+		Cosigner:  cosigner1,
+		Peers:     thresholdPeers,
+		RaftStore: raftStore,
+		Logger:    tmlog.NewTMLogger(tmlog.NewSyncWriter(os.Stdout)).With("module", "validator"),
+	}
+
+	validator := NewThresholdValidator(&thresholdValidatorOpt)
+
+	raftStore.SetThresholdValidator(validator)
+
+	_, err = raftStore.Open()
+	require.NoError(t, err)
+
+	time.Sleep(3 * time.Second) // Ensure there is a leader
+
+	var proposal tmProto.Proposal
+	proposal.Height = 1
+	proposal.Round = 0
+	proposal.Type = tmProto.ProposalType
+
+	signBytes := tm.ProposalSignBytes("chain-id", &proposal)
+
+	err = validator.SignProposal("chain-id", &proposal)
+	if err != nil {
+		t.Logf("%v", err)
+	}
+	require.NoError(t, err)
+
+	require.True(t, privateKey.PubKey().VerifySignature(signBytes, proposal.Signature))
+}
+
+func TestRougeThresholdValidator3of3(t *testing.T) {
+	total := uint8(3)
+	threshold := uint8(3)
+
+	bitSize := 4096
+	rsaKey1, err := rsa.GenerateKey(rand.Reader, bitSize)
+	require.NoError(t, err)
+
+	rsaKey2, err := rsa.GenerateKey(rand.Reader, bitSize)
+	require.NoError(t, err)
+
+	rsaKey3, err := rsa.GenerateKey(rand.Reader, bitSize)
+	require.NoError(t, err)
+
+	peers := []state.CosignerPeer{{
+		ID:        1,
+		PublicKey: rsaKey1.PublicKey,
+	}, {
+		ID:        2,
+		PublicKey: rsaKey2.PublicKey,
+	}, {
+		ID:        3,
+		PublicKey: rsaKey3.PublicKey,
+	}}
+
+	privateKey := tmCryptoEd25519.GenPrivKey()
+
+	privKeyBytes := [64]byte{}
+	copy(privKeyBytes[:], privateKey[:])
+	secretShares := tsed25519.DealShares(tsed25519.ExpandSecret(privKeyBytes[:32]), threshold, total)
+
+	key1 := state.CosignerKey{
+		PubKey:   privateKey.PubKey(),
+		RSAKey:   *rsaKey1,
+		ShareKey: secretShares[0],
+		ID:       1,
+	}
+
+	stateFile1, err := os.CreateTemp("", "state1.json")
+	require.NoError(t, err)
+	defer func(name string) {
+		_ = os.Remove(name)
+	}(stateFile1.Name())
+
+	signState1, err := state.LoadOrCreateSignState(stateFile1.Name())
+	require.NoError(t, err)
+
+	key2 := state.CosignerKey{
+		PubKey:   privateKey.PubKey(),
+		RSAKey:   *rsaKey2,
+		ShareKey: secretShares[1],
+		ID:       2,
+	}
+
+	stateFile2, err := os.CreateTemp("", "state2.json")
+	require.NoError(t, err)
+	defer func(name string) {
+		_ = os.Remove(name)
+	}(stateFile2.Name())
+
+	signState2, err := state.LoadOrCreateSignState(stateFile2.Name())
+	require.NoError(t, err)
+
+	key3 := state.CosignerKey{
+		PubKey:   privateKey.PubKey(),
+		RSAKey:   *rsaKey3,
+		ShareKey: secretShares[1],
+		ID:       3,
+	}
+
+	stateFile3, err := os.CreateTemp("", "state3.json")
+	require.NoError(t, err)
+	defer func(name string) {
+		_ = os.Remove(name)
+	}(stateFile3.Name())
+
+	signState3, err := state.LoadOrCreateSignState(stateFile3.Name())
+	require.NoError(t, err)
+
+	localSigner1 := thresholdsigner.NewThresholdSignerSoft(key1, threshold, total)
+	cosigner1 := coosigner.NewLocalCosigner("", peers, &signState1, localSigner1)
+
+	localSigner2 := thresholdsigner.NewThresholdSignerSoft(key2, threshold, total)
+	cosigner2 := coosigner.NewLocalCosigner("", peers, &signState2, localSigner2)
+
+	localSigner3 := thresholdsigner.NewThresholdSignerSoft(key3, threshold, total)
+	cosigner3 := coosigner.NewLocalCosigner("", peers, &signState3, localSigner3)
+
+	thresholdPeers := make([]coosigner.Cosigner, 0)
 	thresholdPeers = append(thresholdPeers, cosigner2, cosigner3)
 
 	tmpDir, _ := os.MkdirTemp("", "store_test")
