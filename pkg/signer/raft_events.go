@@ -35,6 +35,7 @@ func (f *fsm) handleLSSEvent(value string) {
 		f.logger.Error("LSS Unmarshal Error", err.Error())
 		return
 	}
+	// TODO: This is double trouble.
 	_ = f.thresholdValidator.SaveLastSignedState(*lss)
 	_ = f.cosigner.SaveLastSignedState(*lss)
 }
