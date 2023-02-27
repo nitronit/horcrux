@@ -4,8 +4,8 @@ import (
 	"time"
 
 	metrics "github.com/strangelove-ventures/horcrux/pkg/metrics"
-	"github.com/strangelove-ventures/horcrux/pkg/state"
 	"github.com/strangelove-ventures/horcrux/pkg/thresholdsigner"
+	"github.com/strangelove-ventures/horcrux/pkg/types"
 )
 
 // LocalCosigner responds to sign requests using their share key
@@ -15,15 +15,15 @@ import (
 type LocalCosigner struct {
 	LastSignStateWrapper *thresholdsigner.LastSignStateWrapper
 	address              string
-	Peers                map[int]state.CosignerPeer
+	Peers                map[int]types.CosignerPeer
 	thresholdSigner      ThresholdSigner // Interface
 }
 
 // Initialize a Local Cosigner
 func NewLocalCosigner(
 	address string,
-	peers []state.CosignerPeer,
-	signState *state.SignState,
+	peers []types.CosignerPeer,
+	signState *types.SignState,
 	thresholdSigner ThresholdSigner) *LocalCosigner {
 
 	LastSignStateWrapper := thresholdsigner.LastSignStateWrapper{
@@ -35,7 +35,7 @@ func NewLocalCosigner(
 		LastSignStateWrapper: &LastSignStateWrapper,
 		address:              address,
 		thresholdSigner:      thresholdSigner,
-		Peers:                make(map[int]state.CosignerPeer),
+		Peers:                make(map[int]types.CosignerPeer),
 	}
 
 	for _, peer := range peers {
@@ -44,7 +44,7 @@ func NewLocalCosigner(
 	return cosigner
 }
 
-func (cosigner *LocalCosigner) SaveLastSignedState(signState state.SignStateConsensus) error {
+func (cosigner *LocalCosigner) SaveLastSignedState(signState types.SignStateConsensus) error {
 	return cosigner.LastSignStateWrapper.LastSignState.Save(
 		signState, &cosigner.LastSignStateWrapper.LastSignStateMutex, true)
 }
@@ -65,17 +65,17 @@ func (cosigner *LocalCosigner) GetAddress() string {
 // GetEphemeralSecretParts
 // // Implements the Cosigner interface from Cosigner.go
 func (cosigner *LocalCosigner) GetEphemeralSecretParts(
-	hrst state.HRSTKey) (*state.CosignerEphemeralSecretPartsResponse, error) {
+	hrst types.HRSTKey) (*types.CosignerEphemeralSecretPartsResponse, error) {
 	metrics.MetricsTimeKeeper.SetPreviousLocalEphemeralShare(time.Now())
 
-	res := &state.CosignerEphemeralSecretPartsResponse{
-		EncryptedSecrets: make([]state.CosignerEphemeralSecretPart, 0, len(cosigner.Peers)-1),
+	res := &types.CosignerEphemeralSecretPartsResponse{
+		EncryptedSecrets: make([]types.CosignerEphemeralSecretPart, 0, len(cosigner.Peers)-1),
 	}
 	for _, peer := range cosigner.Peers {
 		if peer.ID == cosigner.GetID() {
 			continue
 		}
-		secretPart, err := cosigner.thresholdSigner.GetEphemeralSecretPart(state.CosignerGetEphemeralSecretPartRequest{
+		secretPart, err := cosigner.thresholdSigner.GetEphemeralSecretPart(types.CosignerGetEphemeralSecretPartRequest{
 			ID:        peer.ID,
 			Height:    hrst.Height,
 			Round:     hrst.Round,
@@ -96,9 +96,9 @@ func (cosigner *LocalCosigner) GetEphemeralSecretParts(
 // SetEphemeralSecretPartsAndSign
 // Implements the Cosigner interface from Cosigner.go
 func (cosigner *LocalCosigner) SetEphemeralSecretPartsAndSign(
-	req state.CosignerSetEphemeralSecretPartsAndSignRequest) (*state.CosignerSignResponse, error) {
+	req types.CosignerSetEphemeralSecretPartsAndSignRequest) (*types.CosignerSignResponse, error) {
 	for _, secretPart := range req.EncryptedSecrets {
-		err := cosigner.thresholdSigner.SetEphemeralSecretPart(state.CosignerSetEphemeralSecretPartRequest{
+		err := cosigner.thresholdSigner.SetEphemeralSecretPart(types.CosignerSetEphemeralSecretPartRequest{
 			SourceID:                       secretPart.SourceID,
 			SourceEphemeralSecretPublicKey: secretPart.SourceEphemeralSecretPublicKey,
 			EncryptedSharePart:             secretPart.EncryptedSharePart,

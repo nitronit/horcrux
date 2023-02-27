@@ -24,7 +24,7 @@ import (
 	"github.com/hashicorp/raft"
 	boltdb "github.com/hashicorp/raft-boltdb/v2"
 	"github.com/strangelove-ventures/horcrux/pkg/cosigner"
-	proto "github.com/strangelove-ventures/horcrux/pkg/proto"
+	proto "github.com/strangelove-ventures/horcrux/pkg/cosigner/proto"
 	"github.com/tendermint/tendermint/libs/log"
 	"github.com/tendermint/tendermint/libs/service"
 	"google.golang.org/grpc"
@@ -325,14 +325,14 @@ func (f *fsm) Snapshot() (raft.FSMSnapshot, error) {
 	return &fsmSnapshot{store: o, logger: f.logger}, nil
 }
 
-// Restore stores the key-value store to a previous state.
+// Restore stores the key-value store to a previous types.
 func (f *fsm) Restore(rc io.ReadCloser) error {
 	o := make(map[string]string)
 	if err := json.NewDecoder(rc).Decode(&o); err != nil {
 		return err
 	}
 
-	// Set the state from the snapshot, no lock required according to
+	// Set the types from the snapshot, no lock required according to
 	// Hashicorp docs.
 	f.m = o
 	return nil

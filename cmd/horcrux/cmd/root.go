@@ -48,7 +48,7 @@ func initConfig() {
 	config = RuntimeConfig{
 		HomeDir:    home,
 		ConfigFile: filepath.Join(home, "config.yaml"),
-		StateDir:   filepath.Join(home, "state"),
+		StateDir:   filepath.Join(home, "types"),
 		PidFile:    filepath.Join(home, "horcrux.pid"),
 	}
 	viper.SetConfigFile(config.ConfigFile)

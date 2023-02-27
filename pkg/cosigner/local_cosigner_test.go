@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/strangelove-ventures/horcrux/pkg/state"
 	thresholdsigner "github.com/strangelove-ventures/horcrux/pkg/thresholdsigner"
+	"github.com/strangelove-ventures/horcrux/pkg/types"
 	"github.com/stretchr/testify/require"
 	tmcryptoed25519 "github.com/tendermint/tendermint/crypto/ed25519"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
@@ -20,7 +20,7 @@ import (
 const SignerType = thresholdsigner.SignerTypeSoftSign
 
 func TestLocalCosignerGetID(t *testing.T) {
-	thresholdSigner := thresholdsigner.NewThresholdSignerSoft(state.CosignerKey{ID: 1, PubKey: tmcryptoed25519.PubKey{}}, 2, 3)
+	thresholdSigner := thresholdsigner.NewThresholdSignerSoft(types.CosignerKey{ID: 1, PubKey: tmcryptoed25519.PubKey{}}, 2, 3)
 	cosigner := NewLocalCosigner("", nil, nil, thresholdSigner)
 	require.Equal(t, cosigner.GetID(), 1)
 }
@@ -38,7 +38,7 @@ func TestLocalCosignerSign2of2(t *testing.T) {
 	rsaKey2, err := rsa.GenerateKey(rand.Reader, bitSize)
 	require.NoError(t, err)
 
-	peers := []state.CosignerPeer{{
+	peers := []types.CosignerPeer{{
 		ID:        1,
 		PublicKey: rsaKey1.PublicKey,
 	}, {
@@ -52,7 +52,7 @@ func TestLocalCosignerSign2of2(t *testing.T) {
 	copy(privKeyBytes[:], privateKey[:])
 	secretShares := tsed25519.DealShares(tsed25519.ExpandSecret(privKeyBytes[:32]), threshold, total)
 
-	key1 := state.CosignerKey{
+	key1 := types.CosignerKey{
 		PubKey:   privateKey.PubKey(),
 		RSAKey:   *rsaKey1,
 		ShareKey: secretShares[0],
@@ -63,10 +63,10 @@ func TestLocalCosignerSign2of2(t *testing.T) {
 	require.NoError(t, err)
 	defer os.Remove(stateFile1.Name())
 
-	signState1, err := state.LoadOrCreateSignState(stateFile1.Name())
+	signState1, err := types.LoadOrCreateSignState(stateFile1.Name())
 	require.NoError(t, err)
 
-	key2 := state.CosignerKey{
+	key2 := types.CosignerKey{
 		PubKey:   privateKey.PubKey(),
 		RSAKey:   *rsaKey2,
 		ShareKey: secretShares[1],
@@ -76,7 +76,7 @@ func TestLocalCosignerSign2of2(t *testing.T) {
 	stateFile2, err := os.CreateTemp("", "state2.json")
 	require.NoError(t, err)
 	defer os.Remove(stateFile2.Name())
-	signState2, err := state.LoadOrCreateSignState(stateFile2.Name())
+	signState2, err := types.LoadOrCreateSignState(stateFile2.Name())
 	require.NoError(t, err)
 
 	localSigner1 := thresholdsigner.NewThresholdSignerSoft(key1, threshold, total)
@@ -89,7 +89,7 @@ func TestLocalCosignerSign2of2(t *testing.T) {
 
 	now := time.Now()
 
-	hrst := state.HRSTKey{
+	hrst := types.HRSTKey{
 		Height:    1,
 		Round:     0,
 		Step:      2,
@@ -121,14 +121,14 @@ func TestLocalCosignerSign2of2(t *testing.T) {
 
 	signBytes := tm.VoteSignBytes("chain-id", &vote)
 
-	sigRes1, err := cosigner1.SetEphemeralSecretPartsAndSign(state.CosignerSetEphemeralSecretPartsAndSignRequest{
+	sigRes1, err := cosigner1.SetEphemeralSecretPartsAndSign(types.CosignerSetEphemeralSecretPartsAndSignRequest{
 		EncryptedSecrets: ephemeralSharesFor1.EncryptedSecrets,
 		HRST:             hrst,
 		SignBytes:        signBytes,
 	})
 	require.NoError(t, err)
 
-	sigRes2, err := cosigner2.SetEphemeralSecretPartsAndSign(state.CosignerSetEphemeralSecretPartsAndSignRequest{
+	sigRes2, err := cosigner2.SetEphemeralSecretPartsAndSign(types.CosignerSetEphemeralSecretPartsAndSignRequest{
 		EncryptedSecrets: ephemeralSharesFor2.EncryptedSecrets,
 		HRST:             hrst,
 		SignBytes:        signBytes,

@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/strangelove-ventures/horcrux/pkg/signer"
-	"github.com/strangelove-ventures/horcrux/pkg/state"
+	horctypes "github.com/strangelove-ventures/horcrux/pkg/types"
 
 	"github.com/cosmos/cosmos-sdk/types/bech32"
 	"github.com/spf13/cobra"
@@ -52,7 +52,7 @@ func AddressCmd() *cobra.Command {
 				return
 			}
 
-			key, err := state.LoadCosignerKey(config.keyFilePath(true))
+			key, err := horctypes.LoadCosignerKey(config.keyFilePath(true))
 			if err != nil {
 				return fmt.Errorf("error reading cosigner key: %s", err)
 			}
@@ -151,21 +151,21 @@ func StartCosignerCmd() *cobra.Command {
 			logger.Info("Tendermint Validator",
 				"mode", cfg.Mode,
 				"priv-key", cfg.PrivValKeyFile,
-				"priv-state-dir", cfg.PrivValStateDir,
+				"priv-types-dir", cfg.PrivValStateDir,
 				"threshold-signer", thresholdSigner.Type())
 
 			var val types.PrivValidator
 
 			// ok to auto initialize on disk since the cosigner share is the one that actually
 			// protects against double sign - this exists as a cache for the final signature
-			signState, err := state.LoadOrCreateSignState(config.privValStateFile(chainID))
+			signState, err := horctypes.LoadOrCreateSignState(config.privValStateFile(chainID))
 			if err != nil {
 				panic(err)
 			}
 
-			// state for our cosigner share
+			// types for our cosigner share
 			// Not automatically initialized on disk to avoid double sign risk
-			shareSignState, err := state.LoadSignState(config.shareStateFile(chainID))
+			shareSignState, err := horctypes.LoadSignState(config.shareStateFile(chainID))
 			if err != nil {
 				panic(err)
 			}
@@ -173,7 +173,7 @@ func StartCosignerCmd() *cobra.Command {
 			cosigners := []coosigner.Cosigner{}
 
 			// add ourselves as a peer so localcosigner can handle GetEphSecPart requests
-			peers := []state.CosignerPeer{{
+			peers := []horctypes.CosignerPeer{{
 				ID:        key.ID,
 				PublicKey: key.RSAKey.PublicKey,
 			}}
@@ -187,7 +187,7 @@ func StartCosignerCmd() *cobra.Command {
 				}
 
 				pubKey := key.CosignerKeys[cosignerConfig.ID-1]
-				peers = append(peers, state.CosignerPeer{
+				peers = append(peers, horctypes.CosignerPeer{
 					ID:        cosigner.GetID(),
 					PublicKey: *pubKey,
 				})

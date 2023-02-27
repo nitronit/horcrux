@@ -5,8 +5,8 @@ import (
 	"net/url"
 	"time"
 
-	proto "github.com/strangelove-ventures/horcrux/pkg/proto"
-	"github.com/strangelove-ventures/horcrux/pkg/state"
+	proto "github.com/strangelove-ventures/horcrux/pkg/cosigner/proto"
+	"github.com/strangelove-ventures/horcrux/pkg/types"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
@@ -69,7 +69,7 @@ func (cosigner *RemoteCosigner) getGRPCClient() (proto.CosignerGRPCClient, *grpc
 
 // GetEphemeralSecretParts implements the cosigner interface
 func (cosigner *RemoteCosigner) GetEphemeralSecretParts(
-	req state.HRSTKey) (*state.CosignerEphemeralSecretPartsResponse, error) {
+	req types.HRSTKey) (*types.CosignerEphemeralSecretPartsResponse, error) {
 	client, conn, err := cosigner.getGRPCClient()
 	if err != nil {
 		return nil, err
@@ -83,14 +83,14 @@ func (cosigner *RemoteCosigner) GetEphemeralSecretParts(
 	if err != nil {
 		return nil, err
 	}
-	return &state.CosignerEphemeralSecretPartsResponse{
-		EncryptedSecrets: state.CosignerEphemeralSecretPartsFromProto(res.GetEncryptedSecrets()),
+	return &types.CosignerEphemeralSecretPartsResponse{
+		EncryptedSecrets: types.CosignerEphemeralSecretPartsFromProto(res.GetEncryptedSecrets()),
 	}, nil
 }
 
 // SetEphemeralSecretPartsAndSign implements the cosigner interface
 func (cosigner *RemoteCosigner) SetEphemeralSecretPartsAndSign(
-	req state.CosignerSetEphemeralSecretPartsAndSignRequest) (*state.CosignerSignResponse, error) {
+	req types.CosignerSetEphemeralSecretPartsAndSignRequest) (*types.CosignerSignResponse, error) {
 	client, conn, err := cosigner.getGRPCClient()
 	if err != nil {
 		return nil, err
@@ -99,14 +99,14 @@ func (cosigner *RemoteCosigner) SetEphemeralSecretPartsAndSign(
 	context, cancelFunc := getContext()
 	defer cancelFunc()
 	res, err := client.SetEphemeralSecretPartsAndSign(context, &proto.CosignerGRPCSetEphemeralSecretPartsAndSignRequest{
-		EncryptedSecrets: state.CosignerEphemeralSecretParts(req.EncryptedSecrets).ToProto(),
+		EncryptedSecrets: types.CosignerEphemeralSecretParts(req.EncryptedSecrets).ToProto(),
 		Hrst:             req.HRST.ToProto(),
 		SignBytes:        req.SignBytes,
 	})
 	if err != nil {
 		return nil, err
 	}
-	return &state.CosignerSignResponse{
+	return &types.CosignerSignResponse{
 		EphemeralPublic: res.GetEphemeralPublic(),
 		Timestamp:       time.Unix(0, res.GetTimestamp()),
 		Signature:       res.GetSignature(),

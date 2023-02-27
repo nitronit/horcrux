@@ -3,7 +3,7 @@ package thresholdsigner
 import (
 	"sync"
 
-	"github.com/strangelove-ventures/horcrux/pkg/state"
+	"github.com/strangelove-ventures/horcrux/pkg/types"
 	tsed25519 "gitlab.com/unit410/threshold-ed25519/pkg"
 )
 
@@ -16,9 +16,9 @@ type LastSignStateWrapper struct {
 	// Signing is thread safe - LastSignStateMutex is used for putting locks so only one goroutine can r/w to the function
 	LastSignStateMutex sync.Mutex
 
-	// lastSignState stores the last sign state for a share we have fully signed
+	// lastSignState stores the last sign types for a share we have fully signed
 	// incremented whenever we are asked to sign a share
-	LastSignState *state.SignState
+	LastSignState *types.SignState
 }
 
 // PeerMetadata holds the share and the ephermeral secret public key

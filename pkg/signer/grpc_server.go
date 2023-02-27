@@ -7,8 +7,8 @@ import (
 
 	"github.com/hashicorp/raft"
 	"github.com/strangelove-ventures/horcrux/pkg/cosigner"
-	proto "github.com/strangelove-ventures/horcrux/pkg/proto"
-	state "github.com/strangelove-ventures/horcrux/pkg/state"
+	proto "github.com/strangelove-ventures/horcrux/pkg/cosigner/proto"
+	state "github.com/strangelove-ventures/horcrux/pkg/types"
 )
 
 type GRPCServer struct {

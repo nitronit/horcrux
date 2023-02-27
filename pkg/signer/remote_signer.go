@@ -6,7 +6,7 @@ import (
 	"time"
 
 	metrics "github.com/strangelove-ventures/horcrux/pkg/metrics"
-	state "github.com/strangelove-ventures/horcrux/pkg/state"
+	state "github.com/strangelove-ventures/horcrux/pkg/types"
 	tmCryptoEd2219 "github.com/tendermint/tendermint/crypto/ed25519"
 	tmCryptoEncoding "github.com/tendermint/tendermint/crypto/encoding"
 	tmLog "github.com/tendermint/tendermint/libs/log"

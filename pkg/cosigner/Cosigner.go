@@ -1,7 +1,7 @@
 package cosigner
 
 import (
-	"github.com/strangelove-ventures/horcrux/pkg/state"
+	"github.com/strangelove-ventures/horcrux/pkg/types"
 )
 
 // Cosigner interface is a set of methods for an m-of-n threshold signature.
@@ -15,9 +15,9 @@ type Cosigner interface {
 	GetAddress() string
 
 	// GetEphemeralSecretParts gets ephemeral secret part for all peers
-	GetEphemeralSecretParts(hrst state.HRSTKey) (*state.CosignerEphemeralSecretPartsResponse, error)
+	GetEphemeralSecretParts(hrst types.HRSTKey) (*types.CosignerEphemeralSecretPartsResponse, error)
 
 	// SetEphemeralSecretPartsAndSign sign the requested bytes
-	SetEphemeralSecretPartsAndSign(req state.CosignerSetEphemeralSecretPartsAndSignRequest) (*state.CosignerSignResponse,
+	SetEphemeralSecretPartsAndSign(req types.CosignerSetEphemeralSecretPartsAndSignRequest) (*types.CosignerSignResponse,
 		error)
 }

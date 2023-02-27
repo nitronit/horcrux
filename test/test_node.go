@@ -20,7 +20,7 @@ import (
 	"time"
 
 	"github.com/strangelove-ventures/horcrux/pkg/signer"
-	"github.com/strangelove-ventures/horcrux/pkg/state"
+	horctypes "github.com/strangelove-ventures/horcrux/pkg/types"
 
 	"github.com/avast/retry-go"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -909,7 +909,7 @@ func (tn TestNodes) WaitForHeight(height int64) error {
 }
 
 func (tn *TestNode) GetPrivVal() (privval.FilePVKey, error) {
-	return state.ReadPrivValidatorFile(tn.privValKeyPath())
+	return horctypes.ReadPrivValidatorFile(tn.privValKeyPath())
 }
 
 func (tn *TestNode) privValKeyPath() string {

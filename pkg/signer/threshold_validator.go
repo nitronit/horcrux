@@ -11,8 +11,8 @@ import (
 
 	"github.com/hashicorp/raft"
 	cosigner "github.com/strangelove-ventures/horcrux/pkg/cosigner"
-	proto "github.com/strangelove-ventures/horcrux/pkg/proto"
-	state "github.com/strangelove-ventures/horcrux/pkg/state"
+	proto "github.com/strangelove-ventures/horcrux/pkg/cosigner/proto"
+	state "github.com/strangelove-ventures/horcrux/pkg/types"
 	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/libs/log"
 	tmProto "github.com/tendermint/tendermint/proto/tendermint/types"
@@ -28,12 +28,12 @@ type ThresholdValidator struct {
 
 	pubkey crypto.PubKey
 
-	// stores the last sign state for a block we have fully signed
+	// stores the last sign types for a block we have fully signed
 	// Cached to respond to SignVote requests if we already have a signature
 	lastSignState      state.SignState
 	lastSignStateMutex sync.Mutex
 
-	// stores the last sign state that we've started progress on
+	// stores the last sign types that we've started progress on
 	lastSignStateInitiated      state.SignState
 	lastSignStateInitiatedMutex sync.Mutex
 
@@ -299,7 +299,7 @@ func (pv *ThresholdValidator) SignBlock(chainID string, block *Block) ([]byte, t
 	if err := pv.SaveLastSignedStateInitiated(state.NewSignStateConsensus(height, round, step)); err != nil {
 		switch err.(type) {
 		case *state.SameHRSError:
-			// Wait for last sign state signature to be the same block
+			// Wait for last sign types signature to be the same block
 			signAgain := false
 			for i := 0; i < 100; i++ {
 				existingSignature, existingTimestamp, sameBlockErr := pv.getExistingBlockSignature(block)
@@ -447,7 +447,7 @@ func (pv *ThresholdValidator) SignBlock(chainID string, block *Block) ([]byte, t
 		}
 	}
 
-	// Emit last signed state to cluster
+	// Emit last signed types to cluster
 	err = pv.raftStore.Emit(raftEventLSS, newLss)
 	if err != nil {
 		pv.logger.Error("Error emitting LSS", err.Error())

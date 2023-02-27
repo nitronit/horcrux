@@ -1,4 +1,4 @@
-package state
+package types
 
 import (
 	"bytes"
@@ -133,7 +133,7 @@ func (signState *SignState) Save(ssc SignStateConsensus, lock *sync.Mutex, async
 	if err != nil {
 		return err
 	}
-	// HRS is greater than existing state, allow
+	// HRS is greater than existing types, allow
 
 	signState.cache[HRSKey{Height: ssc.Height, Round: ssc.Round, Step: ssc.Step}] = ssc
 	for hrs := range signState.cache {
@@ -233,7 +233,7 @@ func (signState *SignState) GetErrorIfLessOrEqual(height int64, round int64, ste
 		defer lock.Unlock()
 	}
 	if height < signState.Height {
-		// lower height than current, don't allow state rollback
+		// lower height than current, don't allow types rollback
 		return errors.New("height regression not allowed")
 	}
 	if height > signState.Height {
@@ -242,7 +242,7 @@ func (signState *SignState) GetErrorIfLessOrEqual(height int64, round int64, ste
 	// Height is equal
 
 	if round < signState.Round {
-		// lower round than current round for same block, don't allow state rollback
+		// lower round than current round for same block, don't allow types rollback
 		return errors.New("round regression not allowed")
 	}
 	if round > signState.Round {
@@ -251,7 +251,7 @@ func (signState *SignState) GetErrorIfLessOrEqual(height int64, round int64, ste
 	// Height and Round are equal
 
 	if step < signState.Step {
-		// lower round than current round for same block, don't allow state rollback
+		// lower round than current round for same block, don't allow types rollback
 		return errors.New("step regression not allowed")
 	}
 	if step == signState.Step {
@@ -262,7 +262,7 @@ func (signState *SignState) GetErrorIfLessOrEqual(height int64, round int64, ste
 	return nil
 }
 
-// LoadSignState loads a sign state from disk.
+// LoadSignState loads a sign types from disk.
 func LoadSignState(filepath string) (SignState, error) {
 	state := SignState{}
 	stateJSONBytes, err := os.ReadFile(filepath)
@@ -286,8 +286,8 @@ func LoadSignState(filepath string) (SignState, error) {
 	return state, nil
 }
 
-// LoadOrCreateSignState loads the sign state from filepath
-// If the sign state could not be loaded, an empty sign state is initialized
+// LoadOrCreateSignState loads the sign types from filepath
+// If the sign types could not be loaded, an empty sign types is initialized
 // and saved to filepath.
 func LoadOrCreateSignState(filepath string) (SignState, error) {
 	existing, err := LoadSignState(filepath)
@@ -295,19 +295,19 @@ func LoadOrCreateSignState(filepath string) (SignState, error) {
 		return existing, nil
 	}
 
-	// There was an error loading the sign state
-	// Make an empty sign state and save it
-	fmt.Println("There was an error loading the sign state. Instead we create an empty state and save it")
+	// There was an error loading the sign types
+	// Make an empty sign types and save it
+	fmt.Println("There was an error loading the sign types. Instead we create an empty types and save it")
 	fmt.Println("filepath:", filepath)
 	state := SignState{}
 	state.filePath = filepath
 	state.cache = make(map[HRSKey]SignStateConsensus)
 	state.save()
-	fmt.Println("state is: ", state)
+	fmt.Println("types is: ", state)
 	return state, nil
 }
 
-// OnlyDifferByTimestamp returns true if the sign bytes of the sign state
+// OnlyDifferByTimestamp returns true if the sign bytes of the sign types
 // are the same as the new sign bytes excluding the timestamp.
 func (signState *SignState) OnlyDifferByTimestamp(signBytes []byte) error {
 	return onlyDifferByTimestamp(signState.Step, signState.SignBytes, signBytes)

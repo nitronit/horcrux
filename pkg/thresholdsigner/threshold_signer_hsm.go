@@ -3,7 +3,7 @@ package thresholdsigner
 import (
 	"time"
 
-	"github.com/strangelove-ventures/horcrux/pkg/state"
+	"github.com/strangelove-ventures/horcrux/pkg/types"
 )
 
 func NewThresholdSignerHSM() *ThresholdSignerHSM {
@@ -27,20 +27,20 @@ func (hsmSigner *ThresholdSignerHSM) DealShares(
 
 // Implements ThresholdSigner
 func (hsmSigner *ThresholdSignerHSM) SetEphemeralSecretPart(
-	req state.CosignerSetEphemeralSecretPartRequest, m *LastSignStateWrapper, peers map[int]state.CosignerPeer) error {
+	req types.CosignerSetEphemeralSecretPartRequest, m *LastSignStateWrapper, peers map[int]types.CosignerPeer) error {
 	panic("Not Implemented")
 }
 
 // Implements ThresholdSigner
 func (hsmSigner *ThresholdSignerHSM) GetEphemeralSecretPart(
-	req state.CosignerGetEphemeralSecretPartRequest, m *LastSignStateWrapper, peers map[int]state.CosignerPeer) (
-	state.CosignerEphemeralSecretPart, error) {
+	req types.CosignerGetEphemeralSecretPartRequest, m *LastSignStateWrapper, peers map[int]types.CosignerPeer) (
+	types.CosignerEphemeralSecretPart, error) {
 	panic("Not Implemented")
 }
 
 // Implements ThresholdSigner
 func (hsmSigner *ThresholdSignerHSM) Sign(
-	signBytes []byte, m *LastSignStateWrapper) (state.CosignerSignResponse, error) {
+	signBytes []byte, m *LastSignStateWrapper) (types.CosignerSignResponse, error) {
 	panic("Not Implemented")
 }
 

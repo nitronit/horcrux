@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/ory/dockertest"
-	"github.com/strangelove-ventures/horcrux/pkg/state"
+	"github.com/strangelove-ventures/horcrux/pkg/types"
 	crypto "github.com/tendermint/tendermint/crypto"
 	ed25519 "github.com/tendermint/tendermint/crypto/ed25519"
 	"github.com/tendermint/tendermint/privval"
@@ -20,7 +20,7 @@ type TestValidator struct {
 	tl            TestLogger
 	Home          string
 	PubKey        crypto.PubKey
-	PrivKeyShares []state.CosignerKey
+	PrivKeyShares []types.CosignerKey
 	Threshold     int
 }
 
@@ -101,7 +101,7 @@ func (tv *TestValidator) genPrivKeyAndShares() error {
 
 func (tv *TestValidator) generateShares(filePVKey privval.FilePVKey) error {
 	tv.PubKey = filePVKey.PubKey
-	shares, err := state.CreateCosignerShares(filePVKey, int64(tv.Threshold), int64(len(tv.Signers)))
+	shares, err := types.CreateCosignerShares(filePVKey, int64(tv.Threshold), int64(len(tv.Signers)))
 	if err != nil {
 		return err
 	}
@@ -112,7 +112,7 @@ func (tv *TestValidator) generateShares(filePVKey privval.FilePVKey) error {
 			return err
 		}
 		privateFilename := filepath.Join(s.Dir(), "share.json")
-		if err := state.WriteCosignerShareFile(shares[i], privateFilename); err != nil {
+		if err := types.WriteCosignerShareFile(shares[i], privateFilename); err != nil {
 			return err
 		}
 	}

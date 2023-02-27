@@ -1,10 +1,10 @@
-package state
+package types
 
 import (
 	"crypto/rsa"
 	"time"
 
-	"github.com/strangelove-ventures/horcrux/pkg/proto"
+	"github.com/strangelove-ventures/horcrux/pkg/cosigner/proto"
 )
 
 // CosignerSignRequest is sent to a co-signer to obtain their signature for the SignBytes

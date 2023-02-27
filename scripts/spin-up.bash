@@ -22,7 +22,7 @@ function setConfigHorcrux() {
     sed -i '' 's/timeout_propose = "3s"/timeout_propose = "3s"/g' $cfgdir/config.toml	
     sed -i '' "s#priv_validator_laddr = \"\"#priv_validator_laddr = \"tcp://0.0.0.0:$privval\"#g" $cfgdir/config.toml	
     sed -i '' 's#allow_duplicate_ip = false#allow_duplicate_ip = true#g' $cfgdir/config.toml	
-    sed -i '' 's#log_level = "main:info,state:info,statesync:info,*:error"#log_level = "info"#g' $cfgdir/config.toml	
+    sed -i '' 's#log_level = "main:info,types:info,statesync:info,*:error"#log_level = "info"#g' $cfgdir/config.toml
     sed -i '' 's#addr_book_strict = true#addr_book_strict = false#g' $cfgdir/config.toml	
     sed -i '' "s#external_address = \"\"#external_address = \"tcp://127.0.0.1:$p2p\"#g" $cfgdir/config.toml	
 }
@@ -42,7 +42,7 @@ function setConfigValidator() {
     sed -i '' 's/timeout_commit = "5s"/timeout_commit = "3s"/g' $cfgdir/config.toml	
     sed -i '' 's/timeout_propose = "3s"/timeout_propose = "3s"/g' $cfgdir/config.toml	
     sed -i '' 's#allow_duplicate_ip = false#allow_duplicate_ip = true#g' $cfgdir/config.toml	
-    sed -i '' 's#log_level = "main:info,state:info,statesync:info,*:error"#log_level = "info"#g' $cfgdir/config.toml	
+    sed -i '' 's#log_level = "main:info,types:info,statesync:info,*:error"#log_level = "info"#g' $cfgdir/config.toml
     sed -i '' 's#addr_book_strict = true#addr_book_strict = false#g' $cfgdir/config.toml	
     sed -i '' "s#external_address = \"\"#external_address = \"tcp://127.0.0.1:$p2p\"#g" $cfgdir/config.toml	
 }

@@ -6,9 +6,9 @@ import (
 	"time"
 
 	"github.com/strangelove-ventures/horcrux/pkg/cosigner"
+	proto "github.com/strangelove-ventures/horcrux/pkg/cosigner/proto"
 	metrics "github.com/strangelove-ventures/horcrux/pkg/metrics"
-	proto "github.com/strangelove-ventures/horcrux/pkg/proto"
-	state "github.com/strangelove-ventures/horcrux/pkg/state"
+	state "github.com/strangelove-ventures/horcrux/pkg/types"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
@@ -24,7 +24,7 @@ func (f *fsm) getEventHandler(key string) func(string) {
 }
 
 func (f *fsm) shouldRetain(key string) bool {
-	// Last sign state handled as events only
+	// Last sign types handled as events only
 	return key != raftEventLSS
 }
 

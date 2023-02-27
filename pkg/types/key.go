@@ -1,6 +1,6 @@
-package state
+package types
 
-import "github.com/strangelove-ventures/horcrux/pkg/proto"
+import "github.com/strangelove-ventures/horcrux/pkg/cosigner/proto"
 
 // HRSKey Height Round Step Key to keep track of ...?
 type HRSKey struct {

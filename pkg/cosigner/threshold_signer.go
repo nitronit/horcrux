@@ -4,8 +4,8 @@ package cosigner
 import (
 	"time"
 
-	"github.com/strangelove-ventures/horcrux/pkg/state"
 	"github.com/strangelove-ventures/horcrux/pkg/thresholdsigner"
+	"github.com/strangelove-ventures/horcrux/pkg/types"
 )
 
 type ThresholdSigner interface {
@@ -13,13 +13,13 @@ type ThresholdSigner interface {
 
 	DealShares(height int64, round int64, step int8, timestamp time.Time) (thresholdsigner.HrsMetadata, error)
 
-	GetEphemeralSecretPart(req state.CosignerGetEphemeralSecretPartRequest, m *thresholdsigner.LastSignStateWrapper,
-		peers map[int]state.CosignerPeer) (state.CosignerEphemeralSecretPart, error)
+	GetEphemeralSecretPart(req types.CosignerGetEphemeralSecretPartRequest, m *thresholdsigner.LastSignStateWrapper,
+		peers map[int]types.CosignerPeer) (types.CosignerEphemeralSecretPart, error)
 
-	SetEphemeralSecretPart(req state.CosignerSetEphemeralSecretPartRequest, m *thresholdsigner.LastSignStateWrapper,
-		peers map[int]state.CosignerPeer) error
+	SetEphemeralSecretPart(req types.CosignerSetEphemeralSecretPartRequest, m *thresholdsigner.LastSignStateWrapper,
+		peers map[int]types.CosignerPeer) error
 
-	Sign(signBytes []byte, m *thresholdsigner.LastSignStateWrapper) (state.CosignerSignResponse, error)
+	Sign(signBytes []byte, m *thresholdsigner.LastSignStateWrapper) (types.CosignerSignResponse, error)
 
 	GetID() (int, error)
 }

@@ -10,8 +10,8 @@ import (
 	"time"
 
 	coosigner "github.com/strangelove-ventures/horcrux/pkg/cosigner"
-	state "github.com/strangelove-ventures/horcrux/pkg/state"
 	thresholdsigner "github.com/strangelove-ventures/horcrux/pkg/thresholdsigner"
+	state "github.com/strangelove-ventures/horcrux/pkg/types"
 	"github.com/stretchr/testify/require"
 	tmCryptoEd25519 "github.com/tendermint/tendermint/crypto/ed25519"
 	tmlog "github.com/tendermint/tendermint/libs/log"
