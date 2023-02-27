@@ -105,7 +105,7 @@ func TestThresholdValidator2of2(t *testing.T) {
 
 	raftStore := getMockRaftStore(cosigner1, tmpDir)
 
-	thresholdValidatorOpt := ThresholdValidatorOpt{
+	thresholdValidatorOpt := ThresholdValidatorOption{
 		Pubkey:    privateKey.PubKey(),
 		Threshold: int(threshold),
 		SignState: signState1,
@@ -251,7 +251,7 @@ func TestThresholdValidator3of3(t *testing.T) {
 
 	raftStore := getMockRaftStore(cosigner1, tmpDir)
 
-	thresholdValidatorOpt := ThresholdValidatorOpt{
+	thresholdValidatorOpt := ThresholdValidatorOption{
 		Pubkey:    privateKey.PubKey(),
 		Threshold: int(threshold),
 		SignState: signState1,
@@ -384,7 +384,7 @@ func TestThresholdValidator2of3(t *testing.T) {
 
 	raftStore := getMockRaftStore(cosigner1, tmpDir)
 
-	thresholdValidatorOpt := ThresholdValidatorOpt{
+	thresholdValidatorOpt := ThresholdValidatorOption{
 		Pubkey:    privateKey.PubKey(),
 		Threshold: int(threshold),
 		SignState: signState1,
@@ -517,7 +517,7 @@ func TestRougeThresholdValidator3of3(t *testing.T) {
 
 	raftStore := getMockRaftStore(cosigner1, tmpDir)
 
-	thresholdValidatorOpt := ThresholdValidatorOpt{
+	thresholdValidatorOpt := ThresholdValidatorOption{
 		Pubkey:    privateKey.PubKey(),
 		Threshold: int(threshold),
 		SignState: signState1,

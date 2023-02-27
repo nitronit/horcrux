@@ -38,7 +38,7 @@ type ThresholdValidator struct {
 	lastSignStateInitiatedMutex sync.Mutex
 
 	// our own cosigner
-	cosigner cosigner.Cosigner
+	cosigner cosigner.Cosigner // TODO: Should this be a LocalCosigner?
 
 	// peer cosigners
 	peers []cosigner.Cosigner
@@ -48,7 +48,7 @@ type ThresholdValidator struct {
 	logger log.Logger
 }
 
-type ThresholdValidatorOpt struct {
+type ThresholdValidatorOption struct {
 	Pubkey    crypto.PubKey
 	Threshold int
 	SignState state.SignState
@@ -59,7 +59,7 @@ type ThresholdValidatorOpt struct {
 }
 
 // NewThresholdValidator creates and returns a new ThresholdValidator
-func NewThresholdValidator(opt *ThresholdValidatorOpt) *ThresholdValidator {
+func NewThresholdValidator(opt *ThresholdValidatorOption) *ThresholdValidator {
 	validator := &ThresholdValidator{}
 	validator.cosigner = opt.Cosigner
 	validator.peers = opt.Peers

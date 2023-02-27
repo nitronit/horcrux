@@ -21,3 +21,8 @@ type Cosigner interface {
 	SetEphemeralSecretPartsAndSign(req types.CosignerSetEphemeralSecretPartsAndSignRequest) (*types.CosignerSignResponse,
 		error)
 }
+
+type ILocalCosigner interface {
+	Cosigner
+	SaveLastSignedState(signState types.SignStateConsensus) error
+}

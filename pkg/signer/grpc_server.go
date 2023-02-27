@@ -12,7 +12,7 @@ import (
 )
 
 type GRPCServer struct {
-	cosigner           *cosigner.LocalCosigner
+	cosigner           cosigner.ILocalCosigner
 	thresholdValidator *ThresholdValidator
 	raftStore          *RaftStore
 	proto.UnimplementedCosignerGRPCServer

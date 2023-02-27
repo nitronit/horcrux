@@ -232,7 +232,7 @@ func StartCosignerCmd() *cobra.Command {
 			services = append(services, raftStore)
 
 			// Initialize the Threshold validator. The Threshold validator "embeds" the local cosigner
-			val = signer.NewThresholdValidator(&signer.ThresholdValidatorOpt{
+			val = signer.NewThresholdValidator(&signer.ThresholdValidatorOption{
 				Pubkey:    key.PubKey,
 				Threshold: int(cfg.CosignerThreshold),
 				SignState: signState,

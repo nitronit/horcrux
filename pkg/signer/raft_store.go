@@ -57,8 +57,9 @@ type RaftStore struct {
 
 	raft *raft.Raft // The consensus mechanism
 
-	logger   log.Logger
-	cosigner *cosigner.LocalCosigner
+	logger log.Logger
+
+	cosigner cosigner.ILocalCosigner
 	// TODO Take a look at this
 	thresholdValidator *ThresholdValidator
 }
@@ -66,7 +67,7 @@ type RaftStore struct {
 // New returns a new Store.
 func NewRaftStore(
 	nodeID string, directory string, bindAddress string, timeout time.Duration,
-	logger log.Logger, cosigner *cosigner.LocalCosigner, raftPeers []cosigner.Cosigner) *RaftStore {
+	logger log.Logger, cosigner cosigner.ILocalCosigner, raftPeers []cosigner.Cosigner) *RaftStore {
 	cosignerRaftStore := &RaftStore{
 		NodeID:      nodeID,
 		RaftDir:     directory,
