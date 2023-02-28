@@ -62,7 +62,6 @@ type CosignerGetEphemeralSecretPartRequest struct {
 	Timestamp time.Time
 }
 
-// HACK: Duplicate use of Block and toProto is temporary.
 type Block struct {
 	Height    int64
 	Round     int64
@@ -117,12 +116,13 @@ func (secretParts CosignerEphemeralSecretParts) ToProto() (out []*proto.Ephemera
 	}
 	return
 }
-func (secretParts CosignerEphemeralSecretParts) toProto() (out []*proto.EphemeralSecretPart) {
-	for _, secretPart := range secretParts {
-		out = append(out, secretPart.toProto())
-	}
-	return
-}
+
+// func (secretParts CosignerEphemeralSecretParts) toProto() (out []*proto.EphemeralSecretPart) {
+// 	for _, secretPart := range secretParts {
+// 		out = append(out, secretPart.toProto())
+// 	}
+// 	return
+// }
 
 func CosignerEphemeralSecretPartFromProto(secretPart *proto.EphemeralSecretPart) CosignerEphemeralSecretPart {
 	return CosignerEphemeralSecretPart{

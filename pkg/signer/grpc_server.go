@@ -8,7 +8,7 @@ import (
 	"github.com/hashicorp/raft"
 	"github.com/strangelove-ventures/horcrux/pkg/cosigner"
 	proto "github.com/strangelove-ventures/horcrux/pkg/cosigner/proto"
-	state "github.com/strangelove-ventures/horcrux/pkg/types"
+	"github.com/strangelove-ventures/horcrux/pkg/types"
 )
 
 type GRPCServer struct {
@@ -20,7 +20,7 @@ type GRPCServer struct {
 
 func (rpc *GRPCServer) SignBlock(
 	ctx context.Context, req *proto.CosignerGRPCSignBlockRequest) (*proto.CosignerGRPCSignBlockResponse, error) {
-	block := &Block{
+	block := &types.Block{
 		Height:    req.Block.GetHeight(),
 		Round:     req.Block.GetRound(),
 		Step:      int8(req.Block.GetStep()),
@@ -40,9 +40,9 @@ func (rpc *GRPCServer) SetEphemeralSecretPartsAndSign(
 	ctx context.Context,
 	req *proto.CosignerGRPCSetEphemeralSecretPartsAndSignRequest,
 ) (*proto.CosignerGRPCSetEphemeralSecretPartsAndSignResponse, error) {
-	res, err := rpc.cosigner.SetEphemeralSecretPartsAndSign(state.CosignerSetEphemeralSecretPartsAndSignRequest{
-		EncryptedSecrets: state.CosignerEphemeralSecretPartsFromProto(req.GetEncryptedSecrets()),
-		HRST:             state.HRSTKeyFromProto(req.GetHrst()),
+	res, err := rpc.cosigner.SetEphemeralSecretPartsAndSign(types.CosignerSetEphemeralSecretPartsAndSignRequest{
+		EncryptedSecrets: types.CosignerEphemeralSecretPartsFromProto(req.GetEncryptedSecrets()),
+		HRST:             types.HRSTKeyFromProto(req.GetHrst()),
 		SignBytes:        req.GetSignBytes(),
 	})
 	if err != nil {
@@ -65,12 +65,12 @@ func (rpc *GRPCServer) GetEphemeralSecretParts(
 	ctx context.Context,
 	req *proto.CosignerGRPCGetEphemeralSecretPartsRequest,
 ) (*proto.CosignerGRPCGetEphemeralSecretPartsResponse, error) {
-	res, err := rpc.cosigner.GetEphemeralSecretParts(state.HRSTKeyFromProto(req.GetHrst()))
+	res, err := rpc.cosigner.GetEphemeralSecretParts(types.HRSTKeyFromProto(req.GetHrst()))
 	if err != nil {
 		return nil, err
 	}
 	return &proto.CosignerGRPCGetEphemeralSecretPartsResponse{
-		EncryptedSecrets: state.CosignerEphemeralSecretParts(res.EncryptedSecrets).ToProto(),
+		EncryptedSecrets: types.CosignerEphemeralSecretParts(res.EncryptedSecrets).ToProto(),
 	}, nil
 }
 

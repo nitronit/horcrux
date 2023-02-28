@@ -6,10 +6,36 @@ import (
 	"encoding/json"
 	"os"
 
+	tmCrypto "github.com/tendermint/tendermint/crypto"
 	tmjson "github.com/tendermint/tendermint/libs/json"
 	"github.com/tendermint/tendermint/privval"
 	tsed25519 "gitlab.com/unit410/threshold-ed25519/pkg"
 )
+
+// CosignerKey is a single key for an m-of-n threshold signer.
+type CosignerKey struct {
+	PubKey       tmCrypto.PubKey  `json:"pub_key"`
+	ShareKey     []byte           `json:"secret_share"`
+	RSAKey       rsa.PrivateKey   `json:"rsa_key"`
+	ID           int              `json:"id"`
+	CosignerKeys []*rsa.PublicKey `json:"rsa_pubs"`
+}
+
+// LoadCosignerKey loads a CosignerKey from file.
+func LoadCosignerKey(file string) (CosignerKey, error) {
+	pvKey := CosignerKey{}
+	keyJSONBytes, err := os.ReadFile(file)
+	if err != nil {
+		return pvKey, err
+	}
+
+	err = json.Unmarshal(keyJSONBytes, &pvKey)
+	if err != nil {
+		return pvKey, err
+	}
+
+	return pvKey, nil
+}
 
 // CreateCosignerSharesFromFile creates cosigner key objects from a priv_validator_key.json file
 func CreateCosignerSharesFromFile(priv string, threshold, shares int64) ([]CosignerKey, error) {
