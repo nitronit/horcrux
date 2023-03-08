@@ -15,7 +15,8 @@ type GRPCServer struct {
 	cosigner           cosigner.ILocalCosigner
 	thresholdValidator *ThresholdValidator
 	raftStore          *RaftStore
-	proto.UnimplementedCosignerGRPCServer
+	// TODO: Change the proto files to be named UnimplementedGRPCServer
+	proto.UnimplementedCosignerGRPCServer // embedding UnimplementedCosignerGRPCServer
 }
 
 func (rpc *GRPCServer) SignBlock(
@@ -74,23 +75,28 @@ func (rpc *GRPCServer) GetEphemeralSecretParts(
 	}, nil
 }
 
+// TransferLeadership transfers leadership to the given peer ID or to the next candidate if no ID is given.
 func (rpc *GRPCServer) TransferLeadership(
 	ctx context.Context,
 	req *proto.CosignerGRPCTransferLeadershipRequest,
 ) (*proto.CosignerGRPCTransferLeadershipResponse, error) {
 	leaderID := req.GetLeaderID()
+	// FIXME: When is leaderID != "" ever not the case?
 	if leaderID != "" {
 		for _, peer := range rpc.raftStore.Peers {
 			thisPeerID := fmt.Sprint(peer.GetID())
 			if thisPeerID == leaderID {
 				peerRaftAddress := p2pURLToRaftAddress(peer.GetAddress())
-				fmt.Printf("Transferring leadership to ID: %s - Address: %s\n", thisPeerID, peerRaftAddress)
+				// FIXME: This should maybe be a logging statement
+				rpc.raftStore.logger.Info("Transferring leadership to:",
+					"id", thisPeerID,
+					"address", peerRaftAddress)
 				rpc.raftStore.raft.LeadershipTransferToServer(raft.ServerID(thisPeerID), raft.ServerAddress(peerRaftAddress))
 				return &proto.CosignerGRPCTransferLeadershipResponse{LeaderID: thisPeerID, LeaderAddress: peerRaftAddress}, nil
 			}
 		}
 	}
-	fmt.Printf("Transferring leadership to next candidate\n")
+	rpc.raftStore.logger.Info("Transferring leadership to next candidate")
 	rpc.raftStore.raft.LeadershipTransfer()
 	return &proto.CosignerGRPCTransferLeadershipResponse{}, nil
 }
