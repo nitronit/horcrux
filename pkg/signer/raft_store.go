@@ -103,7 +103,7 @@ func (s *RaftStore) init() error {
 		return err
 	}
 	grpcServer := grpc.NewServer()
-	proto.RegisterCosignerGRPCServer(grpcServer, &GRPCServer{
+	proto.RegisterGRPCServer(grpcServer, &GRPCServer{
 		cosigner:           s.cosigner,
 		thresholdValidator: s.thresholdValidator,
 		raftStore:          s,

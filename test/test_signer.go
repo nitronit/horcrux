@@ -536,9 +536,9 @@ func (ts *TestSigner) GetLeader(ctx context.Context) (string, error) {
 	ctx, cancelFunc := context.WithTimeout(ctx, 10*time.Second)
 	defer cancelFunc()
 
-	grpcClient := proto.NewCosignerGRPCClient(conn)
+	grpcClient := proto.NewGRPCClient(conn)
 
-	res, err := grpcClient.GetLeader(ctx, &proto.CosignerGRPCGetLeaderRequest{})
+	res, err := grpcClient.GetLeader(ctx, &proto.GRPCGetLeaderRequest{})
 	if err != nil {
 		return "", err
 	}

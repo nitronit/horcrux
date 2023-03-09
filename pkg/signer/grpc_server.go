@@ -16,11 +16,11 @@ type GRPCServer struct {
 	thresholdValidator *ThresholdValidator
 	raftStore          *RaftStore
 	// TODO: Change the proto files to be named UnimplementedGRPCServer
-	proto.UnimplementedCosignerGRPCServer // embedding UnimplementedCosignerGRPCServer
+	proto.UnimplementedGRPCServer // embedding UnimplementedGRPCServer
 }
 
 func (rpc *GRPCServer) SignBlock(
-	ctx context.Context, req *proto.CosignerGRPCSignBlockRequest) (*proto.CosignerGRPCSignBlockResponse, error) {
+	ctx context.Context, req *proto.GRPCSignBlockRequest) (*proto.GRPCSignBlockResponse, error) {
 	block := &types.Block{
 		Height:    req.Block.GetHeight(),
 		Round:     req.Block.GetRound(),
@@ -32,15 +32,15 @@ func (rpc *GRPCServer) SignBlock(
 	if err != nil {
 		return nil, err
 	}
-	return &proto.CosignerGRPCSignBlockResponse{
+	return &proto.GRPCSignBlockResponse{
 		Signature: res,
 	}, nil
 }
 
 func (rpc *GRPCServer) SetEphemeralSecretPartsAndSign(
 	ctx context.Context,
-	req *proto.CosignerGRPCSetEphemeralSecretPartsAndSignRequest,
-) (*proto.CosignerGRPCSetEphemeralSecretPartsAndSignResponse, error) {
+	req *proto.GRPCSetEphemeralSecretPartsAndSignRequest,
+) (*proto.GRPCSetEphemeralSecretPartsAndSignResponse, error) {
 	res, err := rpc.cosigner.SetEphemeralSecretPartsAndSign(types.CosignerSetEphemeralSecretPartsAndSignRequest{
 		EncryptedSecrets: types.CosignerEphemeralSecretPartsFromProto(req.GetEncryptedSecrets()),
 		HRST:             types.HRSTKeyFromProto(req.GetHrst()),
@@ -55,7 +55,7 @@ func (rpc *GRPCServer) SetEphemeralSecretPartsAndSign(
 		"round", req.Hrst.Round,
 		"step", req.Hrst.Step,
 	)
-	return &proto.CosignerGRPCSetEphemeralSecretPartsAndSignResponse{
+	return &proto.GRPCSetEphemeralSecretPartsAndSignResponse{
 		EphemeralPublic: res.EphemeralPublic,
 		Timestamp:       res.Timestamp.UnixNano(),
 		Signature:       res.Signature,
@@ -64,13 +64,13 @@ func (rpc *GRPCServer) SetEphemeralSecretPartsAndSign(
 
 func (rpc *GRPCServer) GetEphemeralSecretParts(
 	ctx context.Context,
-	req *proto.CosignerGRPCGetEphemeralSecretPartsRequest,
-) (*proto.CosignerGRPCGetEphemeralSecretPartsResponse, error) {
+	req *proto.GRPCGetEphemeralSecretPartsRequest,
+) (*proto.GRPCGetEphemeralSecretPartsResponse, error) {
 	res, err := rpc.cosigner.GetEphemeralSecretParts(types.HRSTKeyFromProto(req.GetHrst()))
 	if err != nil {
 		return nil, err
 	}
-	return &proto.CosignerGRPCGetEphemeralSecretPartsResponse{
+	return &proto.GRPCGetEphemeralSecretPartsResponse{
 		EncryptedSecrets: types.CosignerEphemeralSecretParts(res.EncryptedSecrets).ToProto(),
 	}, nil
 }
@@ -78,8 +78,8 @@ func (rpc *GRPCServer) GetEphemeralSecretParts(
 // TransferLeadership transfers leadership to the given peer ID or to the next candidate if no ID is given.
 func (rpc *GRPCServer) TransferLeadership(
 	ctx context.Context,
-	req *proto.CosignerGRPCTransferLeadershipRequest,
-) (*proto.CosignerGRPCTransferLeadershipResponse, error) {
+	req *proto.GRPCTransferLeadershipRequest,
+) (*proto.GRPCTransferLeadershipResponse, error) {
 	leaderID := req.GetLeaderID()
 	// FIXME: When is leaderID != "" ever not the case?
 	if leaderID != "" {
@@ -92,19 +92,19 @@ func (rpc *GRPCServer) TransferLeadership(
 					"id", thisPeerID,
 					"address", peerRaftAddress)
 				rpc.raftStore.raft.LeadershipTransferToServer(raft.ServerID(thisPeerID), raft.ServerAddress(peerRaftAddress))
-				return &proto.CosignerGRPCTransferLeadershipResponse{LeaderID: thisPeerID, LeaderAddress: peerRaftAddress}, nil
+				return &proto.GRPCTransferLeadershipResponse{LeaderID: thisPeerID, LeaderAddress: peerRaftAddress}, nil
 			}
 		}
 	}
 	rpc.raftStore.logger.Info("Transferring leadership to next candidate")
 	rpc.raftStore.raft.LeadershipTransfer()
-	return &proto.CosignerGRPCTransferLeadershipResponse{}, nil
+	return &proto.GRPCTransferLeadershipResponse{}, nil
 }
 
 func (rpc *GRPCServer) GetLeader(
 	ctx context.Context,
-	req *proto.CosignerGRPCGetLeaderRequest,
-) (*proto.CosignerGRPCGetLeaderResponse, error) {
+	req *proto.GRPCGetLeaderRequest,
+) (*proto.GRPCGetLeaderResponse, error) {
 	leader := rpc.raftStore.GetLeader()
-	return &proto.CosignerGRPCGetLeaderResponse{Leader: string(leader)}, nil
+	return &proto.GRPCGetLeaderResponse{Leader: string(leader)}, nil
 }

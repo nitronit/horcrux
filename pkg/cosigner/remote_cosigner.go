@@ -15,7 +15,7 @@ const (
 	rpcTimeout = 4 * time.Second
 )
 
-// RemoteCosigner uses CosignerGRPC to request signing from a remote cosigner
+// RemoteCosigner uses GRPC to request signing from a remote cosigner
 type RemoteCosigner struct {
 	id      int
 	address string
@@ -52,7 +52,7 @@ func (cosigner *RemoteCosigner) GetAddress() string {
 	return cosigner.address
 }
 
-func (cosigner *RemoteCosigner) getGRPCClient() (proto.CosignerGRPCClient, *grpc.ClientConn, error) {
+func (cosigner *RemoteCosigner) getGRPCClient() (proto.GRPCClient, *grpc.ClientConn, error) {
 	var grpcAddress string
 	url, err := url.Parse(cosigner.address)
 	if err != nil {
@@ -64,7 +64,7 @@ func (cosigner *RemoteCosigner) getGRPCClient() (proto.CosignerGRPCClient, *grpc
 	if err != nil {
 		return nil, nil, err
 	}
-	return proto.NewCosignerGRPCClient(conn), conn, nil
+	return proto.NewGRPCClient(conn), conn, nil
 }
 
 // GetEphemeralSecretParts implements the cosigner interface
@@ -77,7 +77,7 @@ func (cosigner *RemoteCosigner) GetEphemeralSecretParts(
 	defer conn.Close()
 	context, cancelFunc := getContext()
 	defer cancelFunc()
-	res, err := client.GetEphemeralSecretParts(context, &proto.CosignerGRPCGetEphemeralSecretPartsRequest{
+	res, err := client.GetEphemeralSecretParts(context, &proto.GRPCGetEphemeralSecretPartsRequest{
 		Hrst: req.ToProto(),
 	})
 	if err != nil {
@@ -98,7 +98,7 @@ func (cosigner *RemoteCosigner) SetEphemeralSecretPartsAndSign(
 	defer conn.Close()
 	context, cancelFunc := getContext()
 	defer cancelFunc()
-	res, err := client.SetEphemeralSecretPartsAndSign(context, &proto.CosignerGRPCSetEphemeralSecretPartsAndSignRequest{
+	res, err := client.SetEphemeralSecretPartsAndSign(context, &proto.GRPCSetEphemeralSecretPartsAndSignRequest{
 		EncryptedSecrets: types.CosignerEphemeralSecretParts(req.EncryptedSecrets).ToProto(),
 		Hrst:             req.HRST.ToProto(),
 		SignBytes:        req.SignBytes,

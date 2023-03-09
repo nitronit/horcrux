@@ -23,6 +23,6 @@ type Cosigner interface {
 }
 
 type ILocalCosigner interface {
-	Cosigner
+	Cosigner // Embeds the Cosigner interface
 	SaveLastSignedState(signState types.SignStateConsensus) error
 }

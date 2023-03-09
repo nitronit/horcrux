@@ -1,0 +1,81 @@
+syntax = "proto3";
+// protoc -I=$(pwd) --go_out=grpc_server.proto
+option go_package = "github.com/strangelove-ventures/horcrux/pkg/cosigner/proto";
+
+package proto;
+
+
+service GRPC {
+	rpc SignBlock (GRPCSignBlockRequest) returns (GRPCSignBlockResponse) {}
+	rpc SetEphemeralSecretPartsAndSign (GRPCSetEphemeralSecretPartsAndSignRequest) returns (GRPCSetEphemeralSecretPartsAndSignResponse) {}
+  rpc GetEphemeralSecretParts (GRPCGetEphemeralSecretPartsRequest) returns (GRPCGetEphemeralSecretPartsResponse) {}
+  rpc TransferLeadership (GRPCTransferLeadershipRequest) returns (GRPCTransferLeadershipResponse) {}
+  rpc GetLeader (GRPCGetLeaderRequest) returns (GRPCGetLeaderResponse) {}
+}
+
+message Block {
+	int64 height = 1;
+	int64 round = 2;
+	int32 step = 3;
+	bytes signBytes = 4;
+	int64 timestamp = 5;
+}
+
+message GRPCSignBlockRequest {
+	string chainID = 1;
+	Block block = 2;
+}
+
+message GRPCSignBlockResponse {
+	bytes signature = 1;
+}
+
+message EphemeralSecretPart {
+	int32 sourceID = 1;
+	int32 destinationID = 2;
+	bytes sourceEphemeralSecretPublicKey = 3;
+	bytes encryptedSharePart = 4;
+	bytes sourceSig = 5;
+}
+
+message HRST {
+	int64 height = 1;
+	int64 round = 2;
+  int32 step = 3;
+  int64 timestamp = 4;
+}
+
+message GRPCSetEphemeralSecretPartsAndSignRequest {
+	repeated EphemeralSecretPart encryptedSecrets = 1;
+	HRST hrst = 2;
+	bytes signBytes = 3;
+}
+
+message GRPCSetEphemeralSecretPartsAndSignResponse {
+	bytes ephemeralPublic = 1;
+	int64 timestamp = 2;
+	bytes signature = 3;
+}
+
+message GRPCGetEphemeralSecretPartsRequest {
+	HRST hrst = 1;
+}
+
+message GRPCGetEphemeralSecretPartsResponse {
+	repeated EphemeralSecretPart encryptedSecrets = 1;
+}
+
+message GRPCTransferLeadershipRequest {
+  string leaderID = 1;
+}
+
+message GRPCTransferLeadershipResponse {
+  string leaderID = 1;
+  string leaderAddress = 2;
+}
+
+message GRPCGetLeaderRequest {}
+
+message GRPCGetLeaderResponse {
+  string leader = 1;
+}
