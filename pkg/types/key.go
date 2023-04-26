@@ -2,7 +2,13 @@ package types
 
 import "github.com/strangelove-ventures/horcrux/pkg/cosigner/proto"
 
-// HRSKey Height Round Step Key to keep track of ...?
+// COMMENT: Height Round Step Key to keep track of ...?
+// HRSKey  (block-) Height, (consensus-) Round, (consensus-) Step
+//   - Height: The height of the block that is being propose
+//   - Round: The round of the consensus algorithm
+//   - Step: The step of the consensus algorithm
+//
+// TODO: This should be generic eniugh to be used for other consensus/blockchains algorithms
 type HRSKey struct {
 	Height int64
 	Round  int64

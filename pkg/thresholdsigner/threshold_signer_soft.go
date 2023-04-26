@@ -17,7 +17,7 @@ import (
 	tsed25519 "gitlab.com/unit410/threshold-ed25519/pkg"
 )
 
-// ThresholdSignerSoft implements the interface and signs the message for each local signer.
+// ThresholdSignerSoft implements the interface pkg/cosigner/threshold_signer.go
 // ThresholdSignerSoft is the implementation of a soft sign signer at the local level.
 type ThresholdSignerSoft struct {
 	pubKeyBytes []byte

@@ -36,6 +36,7 @@ func (f *fsm) handleLSSEvent(value string) {
 		return
 	}
 	// TODO: This is double trouble.
+	// TODO: Add error handling
 	_ = f.thresholdValidator.SaveLastSignedState(*lss)
 	_ = f.cosigner.SaveLastSignedState(*lss)
 }

@@ -42,7 +42,7 @@ type command struct {
 	Value string `json:"value,omitempty"`
 }
 
-// Store is a simple key-value store, where all changes are made via Raft consensus.
+// RaftStore is a simple key-value store, where all changes are made via Raft consensus.
 type RaftStore struct {
 	service.BaseService
 
@@ -64,7 +64,7 @@ type RaftStore struct {
 	thresholdValidator *ThresholdValidator
 }
 
-// New returns a new Store.
+// New returns a new RaftStore.
 func NewRaftStore(
 	nodeID string, directory string, bindAddress string, timeout time.Duration,
 	logger log.Logger, cosigner cosigner.ILocalCosigner, raftPeers []cosigner.Cosigner) *RaftStore {
@@ -211,11 +211,11 @@ func (s *RaftStore) Emit(key string, value interface{}) error {
 	if err != nil {
 		return err
 	}
-	return s.Set(key, string(valueJSON))
+	return s.set(key, string(valueJSON))
 }
 
-// Set sets the value for the given key.
-func (s *RaftStore) Set(key, value string) error {
+// set sets the value for the given key. Only the leader can perform this.
+func (s *RaftStore) set(key, value string) error {
 	if s.raft.State() != raft.Leader {
 		return fmt.Errorf("not leader")
 	}
@@ -292,6 +292,8 @@ func (s *RaftStore) GetLeader() raft.ServerAddress {
 	return s.raft.Leader()
 }
 
+// Comment: This must be the Finite State Machine (FSM) that is used by the Raft
+// NOTE: fsm must implement the raft.FSM interface
 type fsm RaftStore
 
 // Apply applies a Raft log entry to the key-value store.

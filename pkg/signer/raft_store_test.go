@@ -32,7 +32,7 @@ func Test_StoreInMemOpenSingleNode(t *testing.T) {
 	// Simple way to ensure there is a leader.
 	time.Sleep(3 * time.Second)
 
-	if err := s.Set("foo", "bar"); err != nil {
+	if err := s.set("foo", "bar"); err != nil {
 		t.Fatalf("failed to set key: %s", err.Error())
 	}
 

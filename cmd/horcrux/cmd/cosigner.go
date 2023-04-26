@@ -244,6 +244,8 @@ func StartCosignerCmd() *cobra.Command {
 			// TODO why?
 			raftStore.SetThresholdValidator(val.(*signer.ThresholdValidator))
 
+			// Sets the Threshold Validator as the tm.PrivValidator.
+			// COMMENTS: Shouldnt this take the interface? So we can maybe de dependency injection
 			pv = &signer.PvGuard{PrivValidator: val}
 
 			pubkey, err := pv.GetPubKey()

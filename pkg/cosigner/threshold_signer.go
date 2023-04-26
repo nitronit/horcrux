@@ -1,4 +1,4 @@
-// Interface for the local signer whether it's a soft sign or HSM
+// Interface for the local signer whether it's a soft sign or HSM or something else
 package cosigner
 
 import (
@@ -19,6 +19,7 @@ type ThresholdSigner interface {
 	SetEphemeralSecretPart(req types.CosignerSetEphemeralSecretPartRequest, m *thresholdsigner.LastSignStateWrapper,
 		peers map[int]types.CosignerPeer) error
 
+	// Sign the message with the given ephemeral secret part
 	Sign(signBytes []byte, m *thresholdsigner.LastSignStateWrapper) (types.CosignerSignResponse, error)
 
 	GetID() (int, error)

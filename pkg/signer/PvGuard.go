@@ -10,26 +10,28 @@ import (
 
 // PvGuard guards access to an underlying PrivValidator by using mutexes
 // for each of the PrivValidator interface functions
+// Basically embedding the "local" threshold validator/signer at each node
+// into tendermint
 type PvGuard struct {
-	PrivValidator tm.PrivValidator
+	PrivValidator tm.PrivValidator // embeds the local threshold validator via interface
 	pvMutex       sync.Mutex
 }
 
-// GetPubKey implements types.PrivValidator
+// GetPubKey implements tn.types.PrivValidator
 func (pv *PvGuard) GetPubKey() (crypto.PubKey, error) {
 	pv.pvMutex.Lock()
 	defer pv.pvMutex.Unlock()
 	return pv.PrivValidator.GetPubKey()
 }
 
-// SignVote implements types.PrivValidator
+// SignVote implements tm.types.PrivValidator
 func (pv *PvGuard) SignVote(chainID string, vote *tmProto.Vote) error {
 	pv.pvMutex.Lock()
 	defer pv.pvMutex.Unlock()
 	return pv.PrivValidator.SignVote(chainID, vote)
 }
 
-// SignProposal implements types.PrivValidator
+// SignProposal implements tm.types.PrivValidator
 func (pv *PvGuard) SignProposal(chainID string, proposal *tmProto.Proposal) error {
 	pv.pvMutex.Lock()
 	defer pv.pvMutex.Unlock()

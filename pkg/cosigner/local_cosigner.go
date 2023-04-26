@@ -16,7 +16,7 @@ type LocalCosigner struct {
 	LastSignStateWrapper *thresholdsigner.LastSignStateWrapper
 	address              string
 	Peers                map[int]types.CosignerPeer
-	thresholdSigner      ThresholdSigner // Interface
+	thresholdSigner      ThresholdSigner // Interface from pkg/cosigner/threshold_signer.go
 }
 
 // Initialize a Local Cosigner

@@ -120,8 +120,8 @@ func (pv *ThresholdValidator) SignProposal(chainID string, proposal *tmProto.Pro
 	}
 	sig, stamp, err := pv.SignBlock(chainID, block)
 
-	proposal.Signature = sig
-	proposal.Timestamp = stamp
+	proposal.Signature = sig   // Updates the signature. Note that this is a pointer(!) to the original tmProto.Proposal
+	proposal.Timestamp = stamp // Updates the timestamp. Note that this is a pointer(!) to the original tmProto.Proposal
 
 	return err
 }
@@ -249,8 +249,8 @@ func (pv *ThresholdValidator) getExistingBlockSignature(block *types.Block) ([]b
 	return nil, stamp, newStillWaitingForBlockError(hrs)
 }
 
-// TODO this is kind of strange behaviour of duplicating block *Block
 func (pv *ThresholdValidator) SignBlock(chainID string, block *types.Block) ([]byte, time.Time, error) {
+	// COMMENT: this is kind of strange behaviour of duplicating block *Block
 	height, round, step, stamp, signBytes := block.Height, block.Round, block.Step, block.Timestamp, block.SignBytes
 
 	blocka := &types.Block{
@@ -421,7 +421,7 @@ func (pv *ThresholdValidator) SignBlock(chainID string, block *types.Block) ([]b
 		return nil, stamp, errors.New("not enough co-signers")
 	}
 
-	// TODO: Make an "alias" of this so any Combine function can be used
+	// TODO: Make an "interface" of this so any "tsed" function can be used
 	// assemble into final signature
 	combinedSig := tsed25519.CombineShares(total, sigIds, shareSigs)
 
