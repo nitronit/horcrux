@@ -3,15 +3,25 @@ syntax = "proto3";
 option go_package = "github.com/strangelove-ventures/horcrux/pkg/proto";
 
 package proto;
-// TODO: Rename it as GPRCserver. It makes more sense since we are using it for all connections. 
-// CosignerGRPC handles all the services (the server)
-service ICosignerGRPCServer {
-	rpc SignBlock (CosignerGRPCSignBlockRequest) returns (CosignerGRPCSignBlockResponse) {}
-	rpc SetNoncesAndSign (CosignerGRPCSetNoncesAndSignRequest) returns (CosignerGRPCSetNoncesAndSignResponse) {}
-  rpc GetNonces (CosignerGRPCGetNoncesRequest) returns (CosignerGRPCGetNoncesResponse) {}
-  rpc TransferLeadership (CosignerGRPCTransferLeadershipRequest) returns (CosignerGRPCTransferLeadershipResponse) {}
-  rpc GetLeader (CosignerGRPCGetLeaderRequest) returns (CosignerGRPCGetLeaderResponse) {}
+// TODO: Should we split the service(?) into 2 one for "RAFT" and one for "Cosigner"
+// CosignerGRPC handles all the cosigner level "services"
+// All RPCs in ICosignerGRPCServer are Unary. This means the client sends a single request to the 
+// server and gets a single response back, just like a normal function call.
+service ICosignerGRPC {
+		rpc SetNoncesAndSign (CosignerGRPCSetNoncesAndSignRequest) returns (CosignerGRPCSetNoncesAndSignResponse) {}
+  	rpc GetNonces (CosignerGRPCGetNoncesRequest) returns (CosignerGRPCGetNoncesResponse) {}
+
 }
+
+// IRaftGRPC handles all the cosigner level "services"
+// All RPCs in ICosignerGRPCServer are Unary. This means the client sends a single request to the
+// server and gets a single response back, just like a normal function call
+service IRaftGRPC{
+		rpc SignBlock (RaftGRPCSignBlockRequest) returns (RaftGRPCSignBlockResponse) {}
+		rpc TransferLeadership (RaftGRPCTransferLeadershipRequest) returns (RaftGRPCTransferLeadershipResponse) {}
+		rpc GetLeader (RaftGRPCGetLeaderRequest) returns (RaftGRPCGetLeaderResponse) {}
+}
+
 
 message Block {
 	int64 height = 1;
@@ -21,12 +31,12 @@ message Block {
 	int64 timestamp = 5;
 }
 
-message CosignerGRPCSignBlockRequest {
+message RaftGRPCSignBlockRequest {
 	string chainID = 1;
 	Block block = 2;
 }
 
-message CosignerGRPCSignBlockResponse {
+message RaftGRPCSignBlockResponse {
 	bytes signature = 1;
 }
 
@@ -41,15 +51,15 @@ message Nonce {
 message HRST {
 	int64 height = 1;
 	int64 round = 2;
-  int32 step = 3;
-  int64 timestamp = 4;
+  	int32 step = 3;
+  	int64 timestamp = 4;
 }
 
 message CosignerGRPCSetNoncesAndSignRequest {
 	repeated Nonce nonces = 1;
 	HRST hrst = 2;
 	bytes signBytes = 3;
-  string chainID = 4;
+  	string chainID = 4;
 }
 
 message CosignerGRPCSetNoncesAndSignResponse {
@@ -60,24 +70,24 @@ message CosignerGRPCSetNoncesAndSignResponse {
 
 message CosignerGRPCGetNoncesRequest {
 	HRST hrst = 1;
-  string chainID = 2;
+  	string chainID = 2;
 }
 
 message CosignerGRPCGetNoncesResponse {
 	repeated Nonce nonces = 1;
 }
 
-message CosignerGRPCTransferLeadershipRequest {
-  string leaderID = 1;
+message RaftGRPCTransferLeadershipRequest {
+  	string leaderID = 1;
 }
 
-message CosignerGRPCTransferLeadershipResponse {
-  string leaderID = 1;
-  string leaderAddress = 2;
+message RaftGRPCTransferLeadershipResponse {
+  	string leaderID = 1;
+  	string leaderAddress = 2;
 }
 
-message CosignerGRPCGetLeaderRequest {}
+message RaftGRPCGetLeaderRequest {}
 
-message CosignerGRPCGetLeaderResponse {
-  string leader = 1;
+message RaftGRPCGetLeaderResponse {
+  	string leader = 1;
 }

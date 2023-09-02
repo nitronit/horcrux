@@ -1,6 +1,6 @@
 package pcosigner
 
-// RemoteCosigner is a Cosigner implementation that uses gRPC make to request from other Cosigners
+// RemoteCosigner is a Cosigner implementation that uses gRPC make to request to other Cosigners
 import (
 	"context"
 	"fmt"
@@ -68,7 +68,7 @@ func (cosigner *RemoteCosigner) VerifySignature(_ string, _, _ []byte) bool {
 	return false
 }
 
-func (cosigner *RemoteCosigner) getGRPCClient() (proto.ICosignerGRPCServerClient, *grpc.ClientConn, error) {
+func (cosigner *RemoteCosigner) getGRPCClient() (proto.ICosignerGRPCClient, *grpc.ClientConn, error) {
 	var grpcAddress string
 	url, err := url.Parse(cosigner.address)
 	if err != nil {
@@ -80,7 +80,7 @@ func (cosigner *RemoteCosigner) getGRPCClient() (proto.ICosignerGRPCServerClient
 	if err != nil {
 		return nil, nil, err
 	}
-	return proto.NewICosignerGRPCServerClient(conn), conn, nil
+	return proto.NewICosignerGRPCClient(conn), conn, nil
 }
 
 // GetNonces implements the Cosigner interface

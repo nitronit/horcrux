@@ -73,7 +73,7 @@ func loadKeyForLocalCosigner(
 func testThresholdValidator(t *testing.T, threshold, total uint8) {
 	cosigners, pubKey := getTestLocalCosigners(t, threshold, total)
 
-	thresholdCosigners := make([]ICosigner, 0, threshold-1)
+	thresholdCosigners := make([]pcosigner.IRemoteCosigner, 0, threshold-1)
 
 	for i, cosigner := range cosigners {
 		require.Equal(t, i+1, cosigner.GetID())
@@ -83,7 +83,7 @@ func testThresholdValidator(t *testing.T, threshold, total uint8) {
 		}
 	}
 
-	leader := &MockLeader{id: 1}
+	leader := &MockLeader{id: 1, cosigner: cosigners[0]}
 
 	validator := NewThresholdValidator(
 		cometlog.NewTMLogger(cometlog.NewSyncWriter(os.Stdout)).With("module", "validator"),
@@ -100,6 +100,9 @@ func testThresholdValidator(t *testing.T, threshold, total uint8) {
 	leader.leader = validator
 
 	err := validator.LoadSignStateIfNecessary(testChainID)
+	if err != nil {
+		t.Logf("[error] %v", err)
+	}
 	require.NoError(t, err)
 
 	proposal := cometproto.Proposal{
@@ -111,8 +114,10 @@ func testThresholdValidator(t *testing.T, threshold, total uint8) {
 	signBytes := comet.ProposalSignBytes(testChainID, &proposal)
 
 	err = validator.SignProposal(testChainID, &proposal)
+	if err != nil {
+		t.Logf("SignProposal [error] %v", err)
+	}
 	require.NoError(t, err)
-
 	require.True(t, pubKey.VerifySignature(signBytes, proposal.Signature))
 
 	firstSignature := proposal.Signature
@@ -341,13 +346,13 @@ func testThresholdValidatorLeaderElection(t *testing.T, threshold, total uint8) 
 	var leader *ThresholdValidator
 	leaders := make([]*MockLeader, total)
 	for i, cosigner := range cosigners {
-		peers := make([]ICosigner, 0, len(cosigners)-1)
+		peers := make([]pcosigner.IRemoteCosigner, 0, len(cosigners)-1)
 		for j, otherCosigner := range cosigners {
 			if i != j {
 				peers = append(peers, otherCosigner)
 			}
 		}
-		leaders[i] = &MockLeader{id: cosigner.GetID(), leader: leader}
+		leaders[i] = &MockLeader{id: cosigner.GetID(), leader: leader, cosigner: cosigner}
 		tv := NewThresholdValidator(
 			cometlog.NewTMLogger(cometlog.NewSyncWriter(os.Stdout)).With("module", "validator"),
 			cosigner.Config,
@@ -375,18 +380,17 @@ func testThresholdValidatorLeaderElection(t *testing.T, threshold, total uint8) 
 			for _, l := range leaders {
 				l.SetLeader(nil)
 			}
-			t.Log("No leader")
+			t.Log("No leader, will set a leader")
 
 			rnd, err := rand.Int(rand.Reader, big.NewInt(50))
 			require.NoError(t, err)
 			// time without a leader
 			time.Sleep(time.Duration(int(rnd.Int64())+100) * time.Millisecond)
-
 			newLeader := thresholdValidators[i%len(thresholdValidators)]
 			for _, l := range leaders {
 				l.SetLeader(newLeader)
+				t.Logf("New leader: %d", l.cosigner.GetID())
 			}
-			t.Logf("New leader: %d", newLeader.myCosigner.GetID())
 
 			// time with new leader
 			rnd, err = rand.Int(rand.Reader, big.NewInt(50))

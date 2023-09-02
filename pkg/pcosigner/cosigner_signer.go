@@ -1,6 +1,7 @@
 package pcosigner
 
 // IThresholdSigner is interface for the cosigner_signer whether it's a soft sign or HSM
+// Mainly for FUTURE use if and when we want to support HSM
 type IThresholdSigner interface {
 	// GetPubKey returns the persistent public key
 	GetPubKey() []byte
@@ -13,6 +14,7 @@ type IThresholdSigner interface {
 	Sign(nonces []Nonce, payload []byte) ([]byte, error)
 
 	// CombineSignatures combines multiple partial signatures to a full signature.
+	// FIX: not necessary this need to be in a Thresholdsigner?
 	CombineSignatures([]PartialSignature) ([]byte, error)
 }
 

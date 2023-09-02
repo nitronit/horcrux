@@ -8,6 +8,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/strangelove-ventures/horcrux/pkg/pcosigner/signer"
+	"github.com/strangelove-ventures/horcrux/pkg/pcosigner/signer/shamirCosign"
+
 	"github.com/strangelove-ventures/horcrux/pkg/pcosigner"
 	"github.com/strangelove-ventures/horcrux/pkg/types"
 
@@ -20,6 +23,7 @@ import (
 	"github.com/strangelove-ventures/horcrux/pkg/proto"
 )
 
+// Makes sure  ThresholdValitator implements IPrivValidator, a wrapper around
 var _ IPrivValidator = &ThresholdValidator{}
 
 type ValidatorSignBlockRequest struct {
@@ -37,15 +41,10 @@ type ThresholdValidator struct {
 
 	grpcTimeout time.Duration
 
-	chainState sync.Map
+	chainState         sync.Map
+	thresholdalgorithm signer.ISigner // This is our threshold implementation. It should be injected
 
-	// our own cosigner
-	myCosigner *pcosigner.LocalCosigner
-
-	// peer cosigners
-	peerCosigners []ICosigner
-
-	leader ILeader
+	leader ILeader // The Raft leader
 
 	logger log.Logger
 
@@ -72,19 +71,22 @@ func NewThresholdValidator(
 	threshold int,
 	grpcTimeout time.Duration,
 	maxWaitForSameBlockAttempts int,
-	myCosigner *pcosigner.LocalCosigner,
-	peerCosigners []ICosigner,
+	myCosigner pcosigner.ILocalCosigner,
+	peerCosigners []pcosigner.IRemoteCosigner,
 	leader ILeader,
 ) *ThresholdValidator {
+
 	return &ThresholdValidator{
 		logger:                      logger,
 		config:                      config,
 		threshold:                   threshold,
 		grpcTimeout:                 grpcTimeout,
 		maxWaitForSameBlockAttempts: maxWaitForSameBlockAttempts,
-		myCosigner:                  myCosigner,
-		peerCosigners:               peerCosigners,
-		leader:                      leader,
+		thresholdalgorithm: shamirCosign.NewShamirCosign(
+			logger,
+			myCosigner,
+			peerCosigners),
+		leader: leader,
 	}
 }
 
@@ -228,28 +230,21 @@ func (pv *ThresholdValidator) notifyBlockSignError(chainID string, hrs types.HRS
 	css.lastSignState.CondBroadcast()
 }
 
-// waitForSignStatesToFlushToDisk waits for any sign states to finish writing to disk.
-func (pv *ThresholdValidator) waitForSignStatesToFlushToDisk() {
-	pv.pendingDiskWG.Wait()
-
-	pv.myCosigner.WaitForSignStatesToFlushToDisk()
-}
-
 // Stop safely shuts down the ThresholdValidator.
 // Stop implements IPrivValidator from threshold_remote_signer.go
 func (pv *ThresholdValidator) Stop() {
-	pv.waitForSignStatesToFlushToDisk()
+	pv.thresholdalgorithm.WaitForSignStatesToFlushToDisk()
 }
 
 // GetPubKey returns the public key of the validator.
 // Implements IPrivValidator fromt threshold_remote_signer.go
 func (pv *ThresholdValidator) GetPubKey(chainID string) (crypto.PubKey, error) {
-	return pv.myCosigner.GetPubKey(chainID)
+	return pv.thresholdalgorithm.GetPubKey(chainID)
 }
 
 // SignVote signs a canonical representation of the vote, along with the
 // chainID.
-// SignVote implements IPrivValidator fromt threshold_remote_signer.go
+// SignVote implements IPrivValidator from threshold_remote_signer.go
 func (pv *ThresholdValidator) SignVote(chainID string, vote *cometproto.Vote) error {
 	block := &Block{
 		Height:    vote.Height,
@@ -367,117 +362,6 @@ func newSameBlockError(chainID string, hrs types.HRSKey) *SameBlockError {
 	}
 }
 
-func (pv *ThresholdValidator) waitForPeerNonces(
-	chainID string,
-	peer ICosigner,
-	hrst types.HRSTKey,
-	wg *sync.WaitGroup,
-	nonces map[ICosigner][]pcosigner.CosignerNonce,
-	thresholdPeersMutex *sync.Mutex,
-) {
-	peerStartTime := time.Now()
-	peerNonces, err := peer.GetNonces(chainID, hrst)
-	if err != nil {
-		// Significant missing shares may lead to signature failure
-		metrics.MissedNonces.WithLabelValues(peer.GetAddress()).Add(float64(1))
-		metrics.TotalMissedNonces.WithLabelValues(peer.GetAddress()).Inc()
-		pv.logger.Error("Error getting nonces", "cosigner", peer.GetID(), "err", err)
-		return
-	}
-	// Significant missing shares may lead to signature failure
-	metrics.MissedNonces.WithLabelValues(peer.GetAddress()).Set(0)
-	metrics.TimedCosignerNonceLag.WithLabelValues(peer.GetAddress()).Observe(time.Since(peerStartTime).Seconds())
-
-	// Check so that wg.Done is not called more than (threshold - 1) times which causes hardlock
-	thresholdPeersMutex.Lock()
-	if len(nonces) < pv.threshold-1 {
-		nonces[peer] = peerNonces.Nonces
-		defer wg.Done()
-	}
-	thresholdPeersMutex.Unlock()
-}
-func (pv *ThresholdValidator) waitForPeerSetNoncesAndSign(
-	chainID string,
-	peer ICosigner,
-	hrst types.HRSTKey,
-	noncesMap map[ICosigner][]pcosigner.CosignerNonce,
-	signBytes []byte,
-	shareSignatures *[][]byte,
-	shareSignaturesMutex *sync.Mutex,
-	wg *sync.WaitGroup,
-) {
-	peerStartTime := time.Now()
-	defer wg.Done()
-	peerNonces := make([]pcosigner.CosignerNonce, 0, pv.threshold-1)
-
-	peerID := peer.GetID()
-
-	for _, nonces := range noncesMap {
-		for _, nonce := range nonces {
-			// if share is intended for peer, check to make sure source peer is included in threshold
-			if nonce.DestinationID != peerID {
-				continue
-			}
-			for thresholdPeer := range noncesMap {
-				if thresholdPeer.GetID() != nonce.SourceID {
-					continue
-				}
-				// source peer is included in threshold signature, include in sharing
-				peerNonces = append(peerNonces, nonce)
-				break
-			}
-			break
-		}
-	}
-
-	sigRes, err := peer.SetNoncesAndSign(pcosigner.CosignerSetNoncesAndSignRequest{
-		ChainID:   chainID,
-		Nonces:    peerNonces,
-		HRST:      hrst,
-		SignBytes: signBytes,
-	})
-
-	if err != nil {
-		pv.logger.Error(
-			"Cosigner failed to set nonces and sign",
-			"id", peerID,
-			"err", err.Error(),
-		)
-		return
-	}
-
-	metrics.TimedCosignerSignLag.WithLabelValues(peer.GetAddress()).Observe(time.Since(peerStartTime).Seconds())
-	pv.logger.Debug(
-		"Received signature part",
-		"cosigner", peerID,
-		"chain_id", chainID,
-		"height", hrst.Height,
-		"round", hrst.Round,
-		"step", hrst.Step,
-	)
-
-	shareSignaturesMutex.Lock()
-	defer shareSignaturesMutex.Unlock()
-
-	peerIdx := peerID - 1
-	(*shareSignatures)[peerIdx] = make([]byte, len(sigRes.Signature))
-	copy((*shareSignatures)[peerIdx], sigRes.Signature)
-}
-
-func waitUntilCompleteOrTimeout(wg *sync.WaitGroup, timeout time.Duration) bool {
-	c := make(chan struct{})
-	go func() {
-		defer close(c)
-		wg.Wait()
-	}()
-	select {
-	case <-c:
-		return false // completed normally
-	case <-time.After(timeout):
-		return true // timed out
-	}
-}
-
 func (pv *ThresholdValidator) LoadSignStateIfNecessary(chainID string) error {
 	if _, ok := pv.chainState.Load(chainID); ok {
 		return nil
@@ -499,7 +383,7 @@ func (pv *ThresholdValidator) LoadSignStateIfNecessary(chainID string) error {
 		lastSignStateInitiatedMutex: &sync.Mutex{},
 	})
 
-	return pv.myCosigner.LoadSignStateIfNecessary(chainID)
+	return pv.LoadSignStateIfNecessary(chainID)
 }
 
 // getExistingBlockSignature returns the existing block signature and no error if the signature is valid for the block.
@@ -578,7 +462,9 @@ func (pv *ThresholdValidator) compareBlockSignatureAgainstHRS(
 
 // SignBlock is the arranger of the whole signature/signing process.
 func (pv *ThresholdValidator) SignBlock(chainID string, block *Block) ([]byte, time.Time, error) {
+	// Placeholders
 	height, round, step, stamp, signBytes := block.Height, block.Round, block.Step, block.Timestamp, block.SignBytes
+	threshold := pv.threshold
 
 	if err := pv.LoadSignStateIfNecessary(chainID); err != nil {
 		return nil, stamp, err
@@ -633,6 +519,7 @@ func (pv *ThresholdValidator) SignBlock(chainID string, block *Block) ([]byte, t
 	// Keep track of the last block that we began the signing process for. Only allow one attempt per block
 	existingSignature, existingTimestamp, err := pv.SaveLastSignedStateInitiated(chainID, block)
 	if err != nil {
+		pv.logger.Error("Error SaveLastSignedStateInitiated", "chainID", chainID, "block", block, "err", err)
 		return nil, stamp, err
 	}
 	if existingSignature != nil {
@@ -640,114 +527,11 @@ func (pv *ThresholdValidator) SignBlock(chainID string, block *Block) ([]byte, t
 		return existingSignature, existingTimestamp, nil
 	}
 
-	numPeers := len(pv.peerCosigners)
-	total := uint8(numPeers + 1)
-	getEphemeralWaitGroup := sync.WaitGroup{}
+	signature, verified, err := pv.thresholdalgorithm.SignAndVerify(
+		chainID, threshold, hrst, pv.grpcTimeout, stamp, timeStartSignBlock, signBytes)
 
-	// Only wait until we have enough threshold signatures
-	getEphemeralWaitGroup.Add(pv.threshold - 1)
-	// Used to track how close we are to threshold
-
-	// Here the actual signing process starts from a cryptological perspective
-	// TODO: This process should be factored out. It is not the responsibility of the validator to know
-	// how to arrange signature of a block. It should be a separate component that is injected into the validator.
-	nonces := make(map[ICosigner][]pcosigner.CosignerNonce)
-	thresholdPeersMutex := sync.Mutex{}
-
-	// From each cosigner peer we are requesting the nonce.
-	// This is done asynchronously.
-	// pv.waitForPeersNonces uses GRPC to get the nonce from the peer.
-	for _, c := range pv.peerCosigners {
-		go pv.waitForPeerNonces(chainID, c, hrst, &getEphemeralWaitGroup,
-			nonces, &thresholdPeersMutex)
-	}
-
-	// Requesting a nonce from our own cosigner (a.k.a. the local cosigner)
-	myNonces, err := pv.myCosigner.GetNonces(chainID, hrst)
 	if err != nil {
-		pv.notifyBlockSignError(chainID, block.HRSKey())
-		// Our ephemeral secret parts are required, cannot proceed
-		return nil, stamp, err
-	}
-
-	// Wait for cosigners to be complete
-	// A Cosigner will either respond in time, or be cancelled with timeout
-	if waitUntilCompleteOrTimeout(&getEphemeralWaitGroup, pv.grpcTimeout) {
-		pv.notifyBlockSignError(chainID, block.HRSKey())
-		return nil, stamp, errors.New("timed out waiting for ephemeral shares")
-	}
-
-	thresholdPeersMutex.Lock()
-	nonces[pv.myCosigner] = myNonces.Nonces
-	thresholdPeersMutex.Unlock()
-
-	metrics.TimedSignBlockThresholdLag.Observe(time.Since(timeStartSignBlock).Seconds())
-	pv.logger.Debug(
-		"Have threshold peers",
-		"chain_id", chainID,
-		"height", hrst.Height,
-		"round", hrst.Round,
-		"step", hrst.Step,
-	)
-
-	setEphemeralAndSignWaitGroup := sync.WaitGroup{}
-
-	// Only wait until we have threshold sigs
-	setEphemeralAndSignWaitGroup.Add(pv.threshold)
-
-	// destination for share signatures
-	shareSignatures := make([][]byte, total)
-
-	// share sigs is updated by goroutines
-	shareSignaturesMutex := sync.Mutex{}
-
-	for cosigner := range nonces {
-		// set peerNonces and sign in single rpc call.
-		go pv.waitForPeerSetNoncesAndSign(chainID, cosigner, hrst, nonces,
-			signBytes, &shareSignatures, &shareSignaturesMutex, &setEphemeralAndSignWaitGroup)
-	}
-
-	// Wait for threshold cosigners to be complete
-	// A Cosigner will either respond in time, or be cancelled with timeout
-	if waitUntilCompleteOrTimeout(&setEphemeralAndSignWaitGroup, 4*time.Second) {
-		pv.notifyBlockSignError(chainID, block.HRSKey())
-		return nil, stamp, errors.New("timed out waiting for peers to sign")
-	}
-
-	metrics.TimedSignBlockCosignerLag.Observe(time.Since(timeStartSignBlock).Seconds())
-	pv.logger.Debug(
-		"Done waiting for cosigners, assembling signatures",
-		"chain_id", chainID,
-		"height", hrst.Height,
-		"round", hrst.Round,
-		"step", hrst.Step,
-	)
-
-	// collect all valid responses into array of partial signatures
-	shareSigs := make([]pcosigner.PartialSignature, 0, pv.threshold)
-	for idx, shareSig := range shareSignatures {
-		if len(shareSig) == 0 {
-			continue
-		}
-
-		// we are ok to use the share signatures - complete boolean
-		// prevents future concurrent access
-		shareSigs = append(shareSigs, pcosigner.PartialSignature{
-			ID:        idx + 1,
-			Signature: shareSig,
-		})
-	}
-
-	if len(shareSigs) < pv.threshold {
-		metrics.TotalInsufficientCosigners.Inc()
-		pv.notifyBlockSignError(chainID, block.HRSKey())
-		return nil, stamp, errors.New("not enough co-signers")
-	}
-
-	// assemble the partial signatures into a valid signature
-	signature, err := pv.myCosigner.CombineSignatures(chainID, shareSigs)
-	if err != nil {
-		pv.notifyBlockSignError(chainID, block.HRSKey())
+		pv.logger.Error("Error pv.thresholdalgorithm.SignAndVerify", "chainID", chainID, "err", err)
 		return nil, stamp, err
 	}
 
@@ -760,7 +544,8 @@ func (pv *ThresholdValidator) SignBlock(chainID string, block *Block) ([]byte, t
 	)
 
 	// verify the combined signature before saving to watermark
-	if !pv.myCosigner.VerifySignature(chainID, signBytes, signature) {
+	// if !pv.myCosigner.VerifySignature(chainID, signBytes, signature)
+	if !verified {
 		metrics.TotalInvalidSignature.Inc()
 		pv.notifyBlockSignError(chainID, block.HRSKey())
 		return nil, stamp, errors.New("combined signature is not valid")

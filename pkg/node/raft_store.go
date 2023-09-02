@@ -18,6 +18,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/davecgh/go-spew/spew"
+	"github.com/strangelove-ventures/horcrux/pkg/pcosigner"
 	"github.com/strangelove-ventures/horcrux/pkg/types"
 
 	"github.com/Jille/raft-grpc-leader-rpc/leaderhealth"
@@ -67,7 +69,7 @@ type RaftStore struct {
 // NewRaftStore returns a new RaftStore.
 func NewRaftStore(
 	nodeID string, directory string, bindAddress string, timeout time.Duration,
-	logger log.Logger) *RaftStore {
+	logger log.Logger, localCosigner *pcosigner.LocalCosigner, peers []pcosigner.ICosigner) *RaftStore {
 	cosignerRaftStore := &RaftStore{
 		NodeID:      nodeID,
 		RaftDir:     directory,
@@ -76,7 +78,13 @@ func NewRaftStore(
 		m:           make(map[string]string),
 		logger:      logger,
 	}
+	spew.Dump(peers)
+	spew.Dump(localCosigner)
 
+	err := cosignerRaftStore.onStart(localCosigner, peers)
+	if err != nil {
+		panic(err)
+	}
 	cosignerRaftStore.BaseService = *service.NewBaseService(logger, "CosignerRaftStore", cosignerRaftStore)
 	return cosignerRaftStore
 }
@@ -85,7 +93,7 @@ func (s *RaftStore) SetThresholdValidator(thresholdValidator *ThresholdValidator
 	s.thresholdValidator = thresholdValidator
 }
 
-func (s *RaftStore) init() error {
+func (s *RaftStore) init(localCosigner *pcosigner.LocalCosigner, peers []pcosigner.ICosigner) error {
 	host := p2pURLToRaftAddress(s.RaftBind)
 	_, port, err := net.SplitHostPort(host)
 	if err != nil {
@@ -96,14 +104,17 @@ func (s *RaftStore) init() error {
 	if err != nil {
 		return err
 	}
-	transportManager, err := s.Open()
+	transportManager, err := s.Open(peers)
 	if err != nil {
 		return err
 	}
 	// Create a new gRPC server which is used by both the Raft, the threshold validator and the cosigner
 	grpcServer := grpc.NewServer()
-	proto.RegisterICosignerGRPCServerServer(grpcServer,
-		NewGRPCServer(s.thresholdValidator.myCosigner, s.thresholdValidator, s))
+
+	// proto.RegisterIRaftGRPCServer(grpcServer, s)
+	proto.RegisterICosignerGRPCServer(grpcServer,
+		// FIX: this is a TempFIX get cosigner
+		NewGRPCServer(localCosigner, s))
 	transportManager.Register(grpcServer)
 	leaderhealth.Setup(s.raft, grpcServer, []string{"Leader"})
 	raftadmin.Register(grpcServer, s.raft)
@@ -113,10 +124,14 @@ func (s *RaftStore) init() error {
 
 // OnStart starts the raft server
 func (s *RaftStore) OnStart() error {
+	s.logger.Info("Starting RaftStore")
+	return nil
+}
+func (s *RaftStore) onStart(localCosign *pcosigner.LocalCosigner, peers []pcosigner.ICosigner) error {
 	go func() {
-		err := s.init()
+		err := s.init(localCosign, peers)
 		if err != nil {
-			fmt.Println("RAFTSTORE")
+			s.logger.Error("Starting RaftStore", "error", err)
 			panic(err)
 		}
 	}()
@@ -135,7 +150,7 @@ func p2pURLToRaftAddress(p2pURL string) string {
 // Open opens the store. If enableSingle is set, and there are no existing peers,
 // then this node becomes the first node, and therefore leader, of the cluster.
 // localID should be the server identifier for this node.
-func (s *RaftStore) Open() (*raftgrpctransport.Manager, error) {
+func (s *RaftStore) Open(peers []pcosigner.ICosigner) (*raftgrpctransport.Manager, error) {
 	// Setup Raft configuration.
 	config := raft.DefaultConfig()
 	config.LocalID = raft.ServerID(s.NodeID)
@@ -182,12 +197,13 @@ func (s *RaftStore) Open() (*raftgrpctransport.Manager, error) {
 			},
 		},
 	}
-
-	for _, c := range s.thresholdValidator.peerCosigners {
-		configuration.Servers = append(configuration.Servers, raft.Server{
-			ID:      raft.ServerID(fmt.Sprint(c.GetID())),
-			Address: raft.ServerAddress(p2pURLToRaftAddress(c.GetAddress())),
-		})
+	// This is also a not so nice fix.
+	for _, c := range peers {
+		configuration.Servers = append(configuration.Servers,
+			raft.Server{
+				ID:      raft.ServerID(fmt.Sprint(c.GetID())),
+				Address: raft.ServerAddress(p2pURLToRaftAddress(c.GetAddress())),
+			})
 	}
 	s.raft.BootstrapCluster(configuration)
 
@@ -212,7 +228,7 @@ func (s *RaftStore) Emit(key string, value interface{}) error {
 // Set sets the value for the given key.
 func (s *RaftStore) Set(key, value string) error {
 	if !s.IsLeader() {
-		return fmt.Errorf("not leader")
+		return fmt.Errorf("not leader, %v is leader", s.GetLeader())
 	}
 
 	c := &command{

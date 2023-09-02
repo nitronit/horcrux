@@ -1,4 +1,4 @@
-package node
+package node_test
 
 import (
 	"crypto/rand"
@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/strangelove-ventures/horcrux/pkg/node"
 	"github.com/strangelove-ventures/horcrux/pkg/pcosigner"
 
 	cometcryptoed25519 "github.com/cometbft/cometbft/crypto/ed25519"
@@ -44,19 +45,22 @@ func Test_StoreInMemOpenSingleNode(t *testing.T) {
 		"",
 	)
 
-	validator := &ThresholdValidator{
-		myCosigner: cosigner}
-	s := &RaftStore{
-		NodeID:             "1",
-		RaftDir:            tmpDir,
-		RaftBind:           "127.0.0.1:0",
-		RaftTimeout:        1 * time.Second,
-		m:                  make(map[string]string),
-		logger:             nil,
-		thresholdValidator: validator,
-	}
+	remoteCosigns := make([]pcosigner.IRemoteCosigner, 0)
+	remoteCosigns = append(remoteCosigns, pcosigner.NewRemoteCosigner(1, "temp"))
+	shadowRemoteCosign := pcosigner.ToIcosigner(remoteCosigns)
+	//spew.Dump(&remoteCosigns)
+	//spew.Dump(&shadowRemoteCosign)
 
-	if _, err := s.Open(); err != nil {
+	//fmt.Printf("remotecosign: %s \n", spew.Dump(&remoteCosigns))
+	//fmt.Printf("shadowRemoteCosign: %v \n", spew.Dump(&shadowRemoteCosign))
+
+	s := node.NewRaftStore("1", tmpDir, "127.0.0.1:0", 1*time.Second, log.NewNopLogger(), cosigner, shadowRemoteCosign)
+
+	validator := node.NewThresholdValidator(log.NewNopLogger(), nil, 0, 1, 1, cosigner, remoteCosigns, s)
+
+	s.SetThresholdValidator(validator)
+
+	if _, err := s.Open(shadowRemoteCosign); err != nil {
 		t.Fatalf("failed to open store: %s", err)
 	}
 

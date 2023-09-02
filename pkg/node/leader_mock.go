@@ -6,22 +6,23 @@ import (
 	"sync"
 	"time"
 
+	"github.com/strangelove-ventures/horcrux/pkg/pcosigner"
 	"github.com/strangelove-ventures/horcrux/pkg/types"
 )
 
 var _ ILeader = (*MockLeader)(nil)
 
 type MockLeader struct {
-	id int
-
-	mu     sync.Mutex
-	leader *ThresholdValidator
+	id       int
+	cosigner pcosigner.ICosigner
+	mu       sync.Mutex
+	leader   *ThresholdValidator
 }
 
 func (m *MockLeader) IsLeader() bool {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	return m.leader != nil && m.leader.myCosigner.GetID() == m.id
+	return m.leader != nil && m.cosigner.GetID() == m.id
 }
 
 func (m *MockLeader) SetLeader(tv *ThresholdValidator) {

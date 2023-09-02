@@ -1,3 +1,4 @@
+// This is responsible for the Cosigners Connections.
 package node
 
 import (
@@ -5,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/cometbft/cometbft/libs/log"
 	"github.com/strangelove-ventures/horcrux/pkg/pcosigner"
 	"github.com/strangelove-ventures/horcrux/pkg/types"
 
@@ -13,35 +15,54 @@ import (
 )
 
 // Enures that GRPCServer implements the proto.CosignerGRPCServer interface.
-var _ proto.ICosignerGRPCServerServer = &GRPCServer{}
+var _ proto.ICosignerGRPCServer = &GRPCServer{}
+var _ proto.IRaftGRPCServer = &GRPCServer{}
 
-type GRPCServer struct {
-	cosigner           *pcosigner.LocalCosigner // The "node's" LocalCosigner
-	thresholdValidator *ThresholdValidator      // The "node's" ThresholdValidator
-	raftStore          *RaftStore               // The "node's" RaftStore
+// TODO Implement as
+
+type CosignGRPCServer struct {
+	cosigner pcosigner.ILocalCosigner
+
+	logger log.Logger
+	proto.UnimplementedICosignerGRPCServer
 	// Promoted Fields is embedded to have forward compatiblitity
-	proto.UnimplementedICosignerGRPCServerServer
+}
+
+type RaftGRPCServer struct {
+	// logger log.Logger
+	peers []pcosigner.ICosigner
+	// The "node's" ThresholdValidator
+	// thresholdValidator *ThresholdValidator
+
+	// The "node's" RaftStore
+	raftStore *RaftStore
+
+	// Promoted Fields is embedded to have forward compatiblitity
+	proto.UnimplementedIRaftGRPCServer
+}
+type GRPCServer struct {
+	*CosignGRPCServer
+	// The "node's" LocalCosigner
+	*RaftGRPCServer
 }
 
 // NewGRPCServer returns a new GRPCServer.
 func NewGRPCServer(
-	cosigner *pcosigner.LocalCosigner,
-	thresholdValidator *ThresholdValidator,
+	cosigner pcosigner.ILocalCosigner,
+	// thresholdValidator *ThresholdValidator,
 	raftStore *RaftStore,
 ) *GRPCServer {
 	return &GRPCServer{
-		// TODO: This is a hack to get around the fact that the cosigner is not a?
-		cosigner:           cosigner,
-		thresholdValidator: thresholdValidator,
-		raftStore:          raftStore,
+		CosignGRPCServer: &CosignGRPCServer{cosigner: cosigner}, // The nodes local cosigner
+		RaftGRPCServer:   &RaftGRPCServer{raftStore: raftStore}, // The nodes raftStore
 	}
 }
 
 // SignBlock "pseudo-implements" the ICosignerGRPCServer interface in pkg/proto/cosigner_grpc_server_grpc.pb.go
-func (rpc *GRPCServer) SignBlock(
+func (rpc *RaftGRPCServer) SignBlock(
 	_ context.Context,
-	req *proto.CosignerGRPCSignBlockRequest,
-) (*proto.CosignerGRPCSignBlockResponse, error) {
+	req *proto.RaftGRPCSignBlockRequest,
+) (*proto.RaftGRPCSignBlockResponse, error) {
 	block := &Block{
 		Height:    req.Block.GetHeight(),
 		Round:     req.Block.GetRound(),
@@ -50,16 +71,53 @@ func (rpc *GRPCServer) SignBlock(
 		Timestamp: time.Unix(0, req.Block.GetTimestamp()),
 	}
 	// this
-	res, _, err := rpc.thresholdValidator.SignBlock(req.ChainID, block)
+	res, _, err := rpc.raftStore.thresholdValidator.SignBlock(req.ChainID, block)
 	if err != nil {
 		return nil, err
 	}
-	return &proto.CosignerGRPCSignBlockResponse{
+	return &proto.RaftGRPCSignBlockResponse{
 		Signature: res,
 	}, nil
 }
 
-func (rpc *GRPCServer) SetNoncesAndSign(
+// TransferLeadership pseudo-implements the ICosignerGRPCServer interface in pkg/proto/cosigner_grpc_server_grpc.pb.go
+func (rpc *RaftGRPCServer) TransferLeadership(
+	_ context.Context,
+	req *proto.RaftGRPCTransferLeadershipRequest,
+) (*proto.RaftGRPCTransferLeadershipResponse, error) {
+	if rpc.raftStore.raft.State() != raft.Leader {
+		return &proto.RaftGRPCTransferLeadershipResponse{}, nil
+	}
+	leaderID := req.GetLeaderID()
+	if leaderID != "" {
+		// TODO: Not an elegant fix. Se other notes.
+		for _, c := range rpc.peers {
+			shardID := fmt.Sprint(c.GetID())
+			if shardID == leaderID {
+				raftAddress := p2pURLToRaftAddress(c.GetAddress())
+				fmt.Printf("Transferring leadership to ID: %s - Address: %s\n", shardID, raftAddress)
+				rpc.raftStore.raft.LeadershipTransferToServer(raft.ServerID(shardID), raft.ServerAddress(raftAddress))
+				return &proto.RaftGRPCTransferLeadershipResponse{LeaderID: shardID, LeaderAddress: raftAddress}, nil
+			}
+		}
+	}
+	fmt.Printf("Transferring leadership to next candidate\n")
+	rpc.raftStore.raft.LeadershipTransfer()
+	return &proto.RaftGRPCTransferLeadershipResponse{}, nil
+}
+
+// GetLeader pseudo-implements the ICosignerGRPCServer interface in pkg/proto/cosigner_grpc_server_grpc.pb.go
+// GetLeader gets the current raft cluster leader and send it as respons.
+func (rpc *RaftGRPCServer) GetLeader(
+	context.Context,
+	*proto.RaftGRPCGetLeaderRequest,
+) (*proto.RaftGRPCGetLeaderResponse, error) {
+	leader := rpc.raftStore.GetLeader()
+	return &proto.RaftGRPCGetLeaderResponse{Leader: string(leader)}, nil
+}
+
+// SetNoncesAndSign implements the ICosignerGRPCServer interface.
+func (rpc *CosignGRPCServer) SetNoncesAndSign(
 	_ context.Context,
 	req *proto.CosignerGRPCSetNoncesAndSignRequest,
 ) (*proto.CosignerGRPCSetNoncesAndSignResponse, error) {
@@ -71,7 +129,7 @@ func (rpc *GRPCServer) SetNoncesAndSign(
 			SignBytes: req.GetSignBytes(),
 		})
 	if err != nil {
-		rpc.raftStore.logger.Error(
+		rpc.logger.Error(
 			"Failed to sign with shard",
 			"chain_id", req.ChainID,
 			"height", req.Hrst.Height,
@@ -81,7 +139,7 @@ func (rpc *GRPCServer) SetNoncesAndSign(
 		)
 		return nil, err
 	}
-	rpc.raftStore.logger.Info(
+	rpc.logger.Info(
 		"Signed with shard",
 		"chain_id", req.ChainID,
 		"height", req.Hrst.Height,
@@ -96,7 +154,7 @@ func (rpc *GRPCServer) SetNoncesAndSign(
 }
 
 // GetNonces implements the ICosignerGRPCServer interface.
-func (rpc *GRPCServer) GetNonces(
+func (rpc *CosignGRPCServer) GetNonces(
 	_ context.Context,
 	req *proto.CosignerGRPCGetNoncesRequest,
 ) (*proto.CosignerGRPCGetNoncesResponse, error) {
@@ -110,39 +168,4 @@ func (rpc *GRPCServer) GetNonces(
 	return &proto.CosignerGRPCGetNoncesResponse{
 		Nonces: pcosigner.CosignerNonces(res.Nonces).ToProto(),
 	}, nil
-}
-
-// TransferLeadership pseudo-implements the ICosignerGRPCServer interface in pkg/proto/cosigner_grpc_server_grpc.pb.go
-func (rpc *GRPCServer) TransferLeadership(
-	_ context.Context,
-	req *proto.CosignerGRPCTransferLeadershipRequest,
-) (*proto.CosignerGRPCTransferLeadershipResponse, error) {
-	if rpc.raftStore.raft.State() != raft.Leader {
-		return &proto.CosignerGRPCTransferLeadershipResponse{}, nil
-	}
-	leaderID := req.GetLeaderID()
-	if leaderID != "" {
-		for _, c := range rpc.raftStore.thresholdValidator.peerCosigners {
-			shardID := fmt.Sprint(c.GetID())
-			if shardID == leaderID {
-				raftAddress := p2pURLToRaftAddress(c.GetAddress())
-				fmt.Printf("Transferring leadership to ID: %s - Address: %s\n", shardID, raftAddress)
-				rpc.raftStore.raft.LeadershipTransferToServer(raft.ServerID(shardID), raft.ServerAddress(raftAddress))
-				return &proto.CosignerGRPCTransferLeadershipResponse{LeaderID: shardID, LeaderAddress: raftAddress}, nil
-			}
-		}
-	}
-	fmt.Printf("Transferring leadership to next candidate\n")
-	rpc.raftStore.raft.LeadershipTransfer()
-	return &proto.CosignerGRPCTransferLeadershipResponse{}, nil
-}
-
-// GetLeader pseudo-implements the ICosignerGRPCServer interface in pkg/proto/cosigner_grpc_server_grpc.pb.go
-// GetLeader gets the current raft cluster leader and send it as respons.
-func (rpc *GRPCServer) GetLeader(
-	context.Context,
-	*proto.CosignerGRPCGetLeaderRequest,
-) (*proto.CosignerGRPCGetLeaderResponse, error) {
-	leader := rpc.raftStore.GetLeader()
-	return &proto.CosignerGRPCGetLeaderResponse{Leader: string(leader)}, nil
 }

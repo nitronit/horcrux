@@ -1,11 +1,11 @@
 package node
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"time"
 
-	"github.com/strangelove-ventures/horcrux/pkg/pcosigner"
 	"github.com/strangelove-ventures/horcrux/pkg/types"
 
 	"github.com/strangelove-ventures/horcrux/pkg/metrics"
@@ -17,6 +17,14 @@ import (
 const (
 	raftEventLSS = "LSS"
 )
+
+const (
+	rpcTimeout = 4 * time.Second
+)
+
+func GetContext() (context.Context, context.CancelFunc) {
+	return context.WithTimeout(context.Background(), rpcTimeout)
+}
 
 func (f *fsm) getEventHandler(key string) func(string) {
 	return map[string]func(string){
@@ -48,10 +56,18 @@ func (f *fsm) handleLSSEvent(value string) {
 		return
 	}
 	_ = f.thresholdValidator.SaveLastSignedState(lss.ChainID, lss.SignStateConsensus)
-	_ = f.thresholdValidator.myCosigner.SaveLastSignedState(lss.ChainID, lss.SignStateConsensus)
+	if err != nil {
+		f.logger.Error("[error] - thresholdValidator.SaveLastSignedState %v", err)
+		// Our ephemeral secret parts are required, cannot proceed
+	}
+	_ = f.thresholdValidator.thresholdalgorithm.SaveLastSignedState(lss.ChainID, lss.SignStateConsensus)
+	if err != nil {
+		f.logger.Error("[error] - thresholdalgorithm.SaveLastSignedState %v", err)
+		// Our ephemeral secret parts are required, cannot proceed
+	}
 }
 
-func (s *RaftStore) getLeaderGRPCClient() (proto.ICosignerGRPCServerClient, *grpc.ClientConn, error) {
+func (s *RaftStore) getLeaderGRPCClient() (proto.IRaftGRPCClient, *grpc.ClientConn, error) {
 	var leader string
 	for i := 0; i < 30; i++ {
 		leader = string(s.GetLeader())
@@ -68,18 +84,20 @@ func (s *RaftStore) getLeaderGRPCClient() (proto.ICosignerGRPCServerClient, *grp
 	if err != nil {
 		return nil, nil, err
 	}
-	return proto.NewICosignerGRPCServerClient(conn), conn, nil
+
+	return proto.NewIRaftGRPCClient(conn), conn, nil
 }
 
+// SignBlock implements the ILeader interface
 func (s *RaftStore) SignBlock(req ValidatorSignBlockRequest) (*ValidatorSignBlockResponse, error) {
 	client, conn, err := s.getLeaderGRPCClient()
 	if err != nil {
 		return nil, err
 	}
 	defer conn.Close()
-	context, cancelFunc := pcosigner.GetContext()
+	context, cancelFunc := GetContext()
 	defer cancelFunc()
-	res, err := client.SignBlock(context, &proto.CosignerGRPCSignBlockRequest{
+	res, err := client.SignBlock(context, &proto.RaftGRPCSignBlockRequest{
 		ChainID: req.ChainID,
 		Block:   req.Block.toProto(),
 	})
