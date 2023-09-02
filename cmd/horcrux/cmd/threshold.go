@@ -25,7 +25,8 @@ func NewThresholdValidator(
 
 	thresholdCfg := config.Config.ThresholdModeConfig
 	// NOTE: Shouldnt this be a list of concrete type instead of interface type?
-	remoteCosigners := make([]node.ICosigner, 0, len(thresholdCfg.Cosigners)-1)
+	remoteCosigners := make([]pcosigner.IRemoteCosigner, 0, len(thresholdCfg.Cosigners)-1)
+	remoteIcosigners := make([]pcosigner.ICosigner, 0, len(thresholdCfg.Cosigners)-1)
 
 	var p2pListen string
 
@@ -42,10 +43,14 @@ func NewThresholdValidator(
 
 	for _, c := range thresholdCfg.Cosigners {
 		if c.ShardID != security.GetID() {
+			temp := pcosigner.NewRemoteCosigner(c.ShardID, c.P2PAddr)
 			remoteCosigners = append(
 				remoteCosigners,
-				pcosigner.NewRemoteCosigner(c.ShardID, c.P2PAddr),
+				temp,
 			)
+			remoteIcosigners = append(
+				remoteIcosigners,
+				temp)
 		} else {
 			p2pListen = c.P2PAddr
 		}
@@ -74,9 +79,8 @@ func NewThresholdValidator(
 	// RAFT node ID is the cosigner ID
 	nodeID := fmt.Sprint(security.GetID())
 
-	// Start RAFT store listener
 	raftStore := node.NewRaftStore(nodeID,
-		raftDir, p2pListen, raftTimeout, logger)
+		raftDir, p2pListen, raftTimeout, logger, localCosigner, remoteIcosigners)
 	if err := raftStore.Start(); err != nil {
 		return nil, nil, fmt.Errorf("error starting raft store: %w", err)
 	}

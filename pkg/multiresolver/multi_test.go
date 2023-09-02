@@ -9,7 +9,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cometbft/cometbft/libs/log"
 	"github.com/strangelove-ventures/horcrux/pkg/node"
+	"github.com/strangelove-ventures/horcrux/pkg/pcosigner"
 
 	grpcretry "github.com/grpc-ecosystem/go-grpc-middleware/retry"
 	"github.com/strangelove-ventures/horcrux/pkg/multiresolver"
@@ -26,27 +28,32 @@ func createListener(nodeID string, homedir string) (string, func(), error) {
 	}
 
 	port := strconv.Itoa(sock.Addr().(*net.TCPAddr).Port)
+	localcosign := pcosigner.NewLocalCosigner(
+		log.NewNopLogger(), nil, nil, "")
 
+	var remoteCosigners []pcosigner.IRemoteCosigner
+	var timeDuration time.Duration
+
+	shadowRemoteCosign := pcosigner.ToIcosigner(remoteCosigners)
 	s := node.NewRaftStore(
 		nodeID,
 		homedir,
 		"127.0.0.1:"+port,
 		500*time.Millisecond,
-		nil)
+		nil, localcosign, shadowRemoteCosign)
 
 	// Need to set pointers to avoid nil pointers.
-	var cosigners []node.ICosigner
-	var timeDuration time.Duration
-	thresholdvalidator := node.NewThresholdValidator(nil, nil, 0, timeDuration, 0, nil, cosigners, nil)
+
+	thresholdvalidator := node.NewThresholdValidator(log.NewNopLogger(), nil, 0, timeDuration, 0, localcosign, remoteCosigners, s)
 	s.SetThresholdValidator(thresholdvalidator)
 
-	transportManager, err := s.Open()
+	transportManager, err := s.Open(shadowRemoteCosign)
 	if err != nil {
 		return "", nil, err
 	}
 
 	grpcServer := grpc.NewServer()
-	proto.RegisterICosignerGRPCServerServer(grpcServer, node.NewGRPCServer(nil, nil, s))
+	proto.RegisterICosignerGRPCServer(grpcServer, node.NewGRPCServer(nil, s))
 	transportManager.Register(grpcServer)
 
 	go func() {
@@ -97,8 +104,8 @@ func TestMultiResolver(t *testing.T) {
 	ctx, cancelFunc := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancelFunc()
 
-	grpcClient := proto.NewICosignerGRPCServerClient(connDNS)
-	_, err = grpcClient.GetLeader(ctx, &proto.CosignerGRPCGetLeaderRequest{})
+	grpcClient := proto.NewIRaftGRPCClient(connDNS)
+	_, err = grpcClient.GetLeader(ctx, &proto.RaftGRPCGetLeaderRequest{})
 	require.NoError(t, err)
 
 	connIP, err := grpc.Dial(targetIP,
@@ -110,7 +117,7 @@ func TestMultiResolver(t *testing.T) {
 	require.NoError(t, err)
 	defer connIP.Close()
 
-	grpcClient = proto.NewICosignerGRPCServerClient(connIP)
-	_, err = grpcClient.GetLeader(ctx, &proto.CosignerGRPCGetLeaderRequest{})
+	grpcClient = proto.NewIRaftGRPCClient(connIP)
+	_, err = grpcClient.GetLeader(ctx, &proto.RaftGRPCGetLeaderRequest{})
 	require.NoError(t, err)
 }
