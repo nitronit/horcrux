@@ -20,7 +20,7 @@ type IRemoteCosigner interface {
 	// Sign the requested bytes
 	SetNoncesAndSign(req CosignerSetNoncesAndSignRequest) (*CosignerSignResponse, error)
 	// GetNonces requests nonce frpm the peer cosigners
-	GetNonces(chainID string, hrst types.HRSTKey) (*CosignerNoncesResponse, error)
+	GetNonces(chainID string, hrst types.HRSTKey) (*CosignNoncesResponse, error)
 }
 
 // ILocalCosigner interface is a set of methods for an m-of-n threshold signature.
@@ -37,7 +37,12 @@ type ILocalCosigner interface {
 	CombineSignatures(id string, sigs []PartialSignature) ([]byte, error)
 }
 
-func ToIcosigner(iface []IRemoteCosigner) []ICosigner {
+func FromILocalToICosigner(iface ILocalCosigner) []ICosigner {
+	icosign := make([]ICosigner, 0)
+	icosign = append(icosign, ICosigner(iface))
+	return icosign
+}
+func FromIRemoteToICosigner(iface []IRemoteCosigner) []ICosigner {
 	icosign := make([]ICosigner, 0)
 	for _, cosigner := range iface {
 		icosign = append(icosign, ICosigner(cosigner))

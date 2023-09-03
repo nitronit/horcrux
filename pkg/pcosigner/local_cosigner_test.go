@@ -117,7 +117,7 @@ func testLocalCosignerSign(t *testing.T, threshold, total uint8, security []ICos
 	tmpDir := t.TempDir()
 
 	thresholdCosigners := make([]*LocalCosigner, threshold)
-	nonces := make([][]CosignerNonce, threshold)
+	nonces := make([][]CosignNonce, threshold)
 
 	now := time.Now()
 
@@ -137,6 +137,8 @@ func testLocalCosignerSign(t *testing.T, threshold, total uint8, security []ICos
 			ID:           id,
 		}
 
+		cosign := NewCosign(id, "")
+
 		cfg.ThresholdModeConfig.Cosigners[i] = CosignerConfig{
 			ShardID: id,
 		}
@@ -153,8 +155,7 @@ func testLocalCosignerSign(t *testing.T, threshold, total uint8, security []ICos
 				Config:   cfg,
 			},
 			security[i],
-			"",
-		)
+			cosign)
 
 		keyBz, err := key.MarshalJSON()
 		require.NoError(t, err)
@@ -167,6 +168,7 @@ func testLocalCosignerSign(t *testing.T, threshold, total uint8, security []ICos
 		require.NoError(t, err)
 
 		require.Equal(t, cosigner.GetID(), id)
+		require.Equal(t, cosigner.security.GetID(), cosigner.GetID())
 
 		if i < int(threshold) {
 			thresholdCosigners[i] = cosigner
@@ -190,7 +192,7 @@ func testLocalCosignerSign(t *testing.T, threshold, total uint8, security []ICos
 	sigs := make([]PartialSignature, threshold)
 
 	for i, cosigner := range thresholdCosigners {
-		cosignerNonces := make([]CosignerNonce, 0, threshold-1)
+		cosignerNonces := make([]CosignNonce, 0, threshold-1)
 
 		for j, nonce := range nonces {
 			if i == j {

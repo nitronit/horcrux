@@ -22,11 +22,11 @@ import (
 //   - Signing is thread safe.
 //   - LocalCosigner implements the ICosigner interface
 type LocalCosigner struct {
+	Cosigner      // embedding the Cosigner struct
 	logger        cometlog.Logger
 	Config        *RuntimeConfig
 	security      ICosignerSecurity
 	chainStateMap sync.Map // chainstate is a used for map[ChainID] -> *ChainState
-	address       string   // TODO: What address are you referring to?
 	pendingDiskWG sync.WaitGroup
 }
 
@@ -34,13 +34,12 @@ func NewLocalCosigner(
 	logger cometlog.Logger,
 	config *RuntimeConfig,
 	security ICosignerSecurity,
-	address string,
+	cosigner Cosigner,
 ) *LocalCosigner {
 	return &LocalCosigner{
 		logger:   logger,
 		Config:   config,
 		security: security,
-		address:  address,
 	}
 }
 
@@ -124,7 +123,7 @@ func (cosigner *LocalCosigner) WaitForSignStatesToFlushToDisk() {
 // GetID returns the id of the cosigner
 // Implements Cosigner interface
 func (cosigner *LocalCosigner) GetID() int {
-	return cosigner.security.GetID()
+	return cosigner.id
 }
 
 // GetAddress returns the RPC URL of the cosigner
@@ -315,7 +314,7 @@ func (cosigner *LocalCosigner) LoadSignStateIfNecessary(chainID string) error {
 func (cosigner *LocalCosigner) GetNonces(
 	chainID string,
 	hrst types.HRSTKey,
-) (*CosignerNoncesResponse, error) {
+) (*CosignNoncesResponse, error) {
 	metrics.MetricsTimeKeeper.SetPreviousLocalNonce(time.Now())
 
 	if err := cosigner.LoadSignStateIfNecessary(chainID); err != nil {
@@ -324,8 +323,8 @@ func (cosigner *LocalCosigner) GetNonces(
 
 	total := len(cosigner.Config.Config.ThresholdModeConfig.Cosigners)
 
-	res := &CosignerNoncesResponse{
-		Nonces: make([]CosignerNonce, total-1), // an empty list of nonces for each cosigner except for ourselves
+	res := &CosignNoncesResponse{
+		Nonces: make([]CosignNonce, total-1), // an empty list of nonces for each cosigner except for ourselves
 	}
 
 	id := cosigner.GetID()
@@ -412,10 +411,10 @@ func (cosigner *LocalCosigner) dealSharesIfNecessary(chainID string, hrst types.
 // The ephemeral secret part is encrypted for the receiver
 func (cosigner *LocalCosigner) getNonce(
 	req CosignerGetNonceRequest,
-) (CosignerNonce, error) {
+) (CosignNonce, error) {
 
 	chainID := req.ChainID
-	zero := CosignerNonce{}
+	zero := CosignNonce{}
 	hrst := types.HRSTKey{
 		Height:    req.Height,
 		Round:     req.Round,

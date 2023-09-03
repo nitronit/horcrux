@@ -21,17 +21,18 @@ import (
 //     "node's" LocalCosigner to set the nonces and sign the payload and respons.
 //   - RemoteCosigner --> gRPC --> LocalCosigner
 //   - RemoteCosigner implements the Cosigner interface
+
 type RemoteCosigner struct {
-	id      int
-	address string
+	Cosigner
 }
 
 // NewRemoteCosigner returns a newly initialized RemoteCosigner
 func NewRemoteCosigner(id int, address string) *RemoteCosigner {
 
-	cosigner := &RemoteCosigner{
+	cosigner := &RemoteCosigner{Cosigner{
 		id:      id,
 		address: address,
+	},
 	}
 	return cosigner
 }
@@ -44,17 +45,8 @@ func GetContext() (context.Context, context.CancelFunc) {
 	return context.WithTimeout(context.Background(), rpcTimeout)
 }
 
-// GetID returns the ID of the remote cosigner
-// Implements the cosigner interface
-func (cosigner *RemoteCosigner) GetID() int {
-	return cosigner.id
-}
-
 // GetAddress returns the P2P URL of the remote cosigner
 // Implements the ICosigner interface
-func (cosigner *RemoteCosigner) GetAddress() string {
-	return cosigner.address
-}
 
 // GetPubKey returns public key of the validator.
 // Implements Cosigner interface
@@ -88,7 +80,7 @@ func (cosigner *RemoteCosigner) getGRPCClient() (proto.ICosignerGRPCClient, *grp
 func (cosigner *RemoteCosigner) GetNonces(
 	chainID string,
 	req types.HRSTKey,
-) (*CosignerNoncesResponse, error) {
+) (*CosignNoncesResponse, error) {
 
 	client, conn, err := cosigner.getGRPCClient()
 	if err != nil {
@@ -107,7 +99,7 @@ func (cosigner *RemoteCosigner) GetNonces(
 	if err != nil {
 		return nil, err
 	}
-	return &CosignerNoncesResponse{
+	return &CosignNoncesResponse{
 		Nonces: CosignerNoncesFromProto(res.GetNonces()),
 	}, nil
 }

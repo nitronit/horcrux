@@ -42,12 +42,12 @@ func Test_StoreInMemOpenSingleNode(t *testing.T) {
 				ECIESKey:  eciesKey,
 				ECIESPubs: []*ecies.PublicKey{&eciesKey.PublicKey},
 			}),
-		"",
+		pcosigner.NewCosign(key.ID, ""),
 	)
 
 	remoteCosigns := make([]pcosigner.IRemoteCosigner, 0)
 	remoteCosigns = append(remoteCosigns, pcosigner.NewRemoteCosigner(1, "temp"))
-	shadowRemoteCosign := pcosigner.ToIcosigner(remoteCosigns)
+	shadowRemoteCosign := pcosigner.FromIRemoteToICosigner(remoteCosigns)
 	//spew.Dump(&remoteCosigns)
 	//spew.Dump(&shadowRemoteCosign)
 

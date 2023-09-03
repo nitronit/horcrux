@@ -18,7 +18,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/strangelove-ventures/horcrux/pkg/pcosigner"
 	"github.com/strangelove-ventures/horcrux/pkg/types"
 
@@ -69,7 +68,7 @@ type RaftStore struct {
 // NewRaftStore returns a new RaftStore.
 func NewRaftStore(
 	nodeID string, directory string, bindAddress string, timeout time.Duration,
-	logger log.Logger, localCosigner *pcosigner.LocalCosigner, peers []pcosigner.ICosigner) *RaftStore {
+	logger log.Logger, localCosigner pcosigner.ILocalCosigner, peers []pcosigner.ICosigner) *RaftStore {
 	cosignerRaftStore := &RaftStore{
 		NodeID:      nodeID,
 		RaftDir:     directory,
@@ -78,11 +77,10 @@ func NewRaftStore(
 		m:           make(map[string]string),
 		logger:      logger,
 	}
-	spew.Dump(peers)
-	spew.Dump(localCosigner)
 
 	err := cosignerRaftStore.onStart(localCosigner, peers)
 	if err != nil {
+		fmt.Printf("cosignerRaftStore.onStart: %v", err)
 		panic(err)
 	}
 	cosignerRaftStore.BaseService = *service.NewBaseService(logger, "CosignerRaftStore", cosignerRaftStore)
@@ -93,7 +91,7 @@ func (s *RaftStore) SetThresholdValidator(thresholdValidator *ThresholdValidator
 	s.thresholdValidator = thresholdValidator
 }
 
-func (s *RaftStore) init(localCosigner *pcosigner.LocalCosigner, peers []pcosigner.ICosigner) error {
+func (s *RaftStore) init(localCosigner pcosigner.ILocalCosigner, peers []pcosigner.ICosigner) error {
 	host := p2pURLToRaftAddress(s.RaftBind)
 	_, port, err := net.SplitHostPort(host)
 	if err != nil {
@@ -106,6 +104,7 @@ func (s *RaftStore) init(localCosigner *pcosigner.LocalCosigner, peers []pcosign
 	}
 	transportManager, err := s.Open(peers)
 	if err != nil {
+		fmt.Printf("s.Open: %v", err)
 		return err
 	}
 	// Create a new gRPC server which is used by both the Raft, the threshold validator and the cosigner
@@ -127,7 +126,7 @@ func (s *RaftStore) OnStart() error {
 	s.logger.Info("Starting RaftStore")
 	return nil
 }
-func (s *RaftStore) onStart(localCosign *pcosigner.LocalCosigner, peers []pcosigner.ICosigner) error {
+func (s *RaftStore) onStart(localCosign pcosigner.ILocalCosigner, peers []pcosigner.ICosigner) error {
 	go func() {
 		err := s.init(localCosign, peers)
 		if err != nil {

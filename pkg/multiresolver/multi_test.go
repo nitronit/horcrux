@@ -28,32 +28,41 @@ func createListener(nodeID string, homedir string) (string, func(), error) {
 	}
 
 	port := strconv.Itoa(sock.Addr().(*net.TCPAddr).Port)
-	localcosign := pcosigner.NewLocalCosigner(
-		log.NewNopLogger(), nil, nil, "")
 
+	// Initiliaze the localcosign as an ILocalCosigner.
+	cosign := pcosigner.Cosigner{}
+	vlocalcosign := pcosigner.NewLocalCosigner(
+		log.NewNopLogger(), nil, nil, cosign)
+
+	var localcosign pcosigner.ILocalCosigner
+	localcosign = vlocalcosign
 	var remoteCosigners []pcosigner.IRemoteCosigner
-	var timeDuration time.Duration
+	remoteCosigners = append(remoteCosigners, vlocalcosign)
 
-	shadowRemoteCosign := pcosigner.ToIcosigner(remoteCosigners)
+	var peers []pcosigner.ICosigner
+	peers = append(peers, vlocalcosign)
+
+	timeDuration := 500 * time.Millisecond
+
 	s := node.NewRaftStore(
 		nodeID,
 		homedir,
 		"127.0.0.1:"+port,
 		500*time.Millisecond,
-		nil, localcosign, shadowRemoteCosign)
+		log.NewNopLogger(), localcosign, peers)
 
 	// Need to set pointers to avoid nil pointers.
-
 	thresholdvalidator := node.NewThresholdValidator(log.NewNopLogger(), nil, 0, timeDuration, 0, localcosign, remoteCosigners, s)
 	s.SetThresholdValidator(thresholdvalidator)
 
-	transportManager, err := s.Open(shadowRemoteCosign)
+	transportManager, err := s.Open(peers)
 	if err != nil {
+		fmt.Printf("Error opening transport manager: %v\n", err)
 		return "", nil, err
 	}
 
 	grpcServer := grpc.NewServer()
-	proto.RegisterICosignerGRPCServer(grpcServer, node.NewGRPCServer(nil, s))
+	proto.RegisterICosignerGRPCServer(grpcServer, node.NewGRPCServer(localcosign, s))
 	transportManager.Register(grpcServer)
 
 	go func() {

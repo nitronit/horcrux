@@ -56,7 +56,7 @@ func (s *ShamirCosign) waitForPeerSetNoncesAndSign(
 	chainID string,
 	peer pcosigner.IRemoteCosigner,
 	hrst types.HRSTKey,
-	noncesMap map[pcosigner.IRemoteCosigner][]pcosigner.CosignerNonce,
+	noncesMap map[pcosigner.IRemoteCosigner][]pcosigner.CosignNonce,
 	signBytes []byte,
 	shareSignatures *[][]byte,
 	shareSignaturesMutex *sync.Mutex,
@@ -65,7 +65,7 @@ func (s *ShamirCosign) waitForPeerSetNoncesAndSign(
 ) {
 	peerStartTime := time.Now()
 	defer wg.Done()
-	peerNonces := make([]pcosigner.CosignerNonce, 0, threshold-1)
+	peerNonces := make([]pcosigner.CosignNonce, 0, threshold-1)
 
 	peerID := peer.GetID()
 
@@ -158,7 +158,7 @@ func (s *ShamirCosign) sign(
 	// Here the actual signing process starts from a cryptological perspective
 	// TODO: This process should be factored out. It is not the responsibility of the validator to know
 	// how to arrange signature of a block. It should be a separate component that is injected into the validator.
-	nonces := make(map[pcosigner.IRemoteCosigner][]pcosigner.CosignerNonce)
+	nonces := make(map[pcosigner.IRemoteCosigner][]pcosigner.CosignNonce)
 	thresholdPeersMutex := sync.Mutex{}
 
 	// From each cosigner peer we are requesting the nonce.
@@ -275,7 +275,7 @@ func (s *ShamirCosign) waitForPeerNonces(
 	peer pcosigner.IRemoteCosigner,
 	hrst types.HRSTKey,
 	wg *sync.WaitGroup,
-	nonces map[pcosigner.IRemoteCosigner][]pcosigner.CosignerNonce,
+	nonces map[pcosigner.IRemoteCosigner][]pcosigner.CosignNonce,
 	thresholdPeersMutex *sync.Mutex,
 	threshold int,
 ) {

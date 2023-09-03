@@ -323,7 +323,7 @@ func getTestLocalCosigners(t *testing.T, threshold, total uint8) ([]*pcosigner.L
 					ECIESPubs: pubKeys,
 				},
 			),
-			"",
+			pcosigner.NewCosign(i+1, ""),
 		)
 		require.NoError(t, err)
 

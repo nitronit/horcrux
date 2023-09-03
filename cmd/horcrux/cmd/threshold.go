@@ -29,7 +29,7 @@ func NewThresholdValidator(
 	remoteIcosigners := make([]pcosigner.ICosigner, 0, len(thresholdCfg.Cosigners)-1)
 
 	var p2pListen string
-
+	var cosign pcosigner.Cosigner
 	var security pcosigner.ICosignerSecurity
 	var eciesErr error
 	security, eciesErr = config.CosignerSecurityECIES()
@@ -52,7 +52,8 @@ func NewThresholdValidator(
 				remoteIcosigners,
 				temp)
 		} else {
-			p2pListen = c.P2PAddr
+			cosign = pcosigner.NewCosign(c.ShardID, c.P2PAddr)
+
 		}
 	}
 
@@ -64,7 +65,7 @@ func NewThresholdValidator(
 		logger,
 		&config,
 		security,
-		p2pListen,
+		cosign,
 	)
 
 	// Validated prior in ValidateThresholdModeConfig
