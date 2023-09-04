@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/strangelove-ventures/horcrux/pkg/pcosigner"
+	"github.com/strangelove-ventures/horcrux/pkg/pcosigner/cipher"
 
 	"github.com/cometbft/cometbft/crypto"
 	cometprivval "github.com/cometbft/cometbft/privval"
@@ -46,7 +47,7 @@ func addressCmd() *cobra.Command {
 					return err
 				}
 
-				key, err := pcosigner.LoadCosignerEd25519Key(keyFile)
+				key, err := cipher.LoadCosignerEd25519Key(keyFile)
 				if err != nil {
 					return fmt.Errorf("error reading cosigner key: %w, check that key is present for chain ID: %s", err, chainID)
 				}

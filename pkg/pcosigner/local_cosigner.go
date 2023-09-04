@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/strangelove-ventures/horcrux/pkg/pcosigner/cipher"
+
 	"github.com/strangelove-ventures/horcrux/pkg/types"
 
 	"sync"
@@ -37,6 +39,7 @@ func NewLocalCosigner(
 	cosigner Cosigner,
 ) *LocalCosigner {
 	return &LocalCosigner{
+		Cosigner: cosigner,
 		logger:   logger,
 		Config:   config,
 		security: security,
@@ -52,13 +55,13 @@ type ChainState struct {
 	// Signing is thread safe - mutex is used for putting locks so only one goroutine can r/w to the ChainState
 	mu sync.RWMutex
 	// signer generates nonces, combines nonces, signs, and verifies signatures.
-	signer IThresholdSigner
+	signer cipher.IThresholdSigner
 
 	// Height, Round, Step -> metadata
-	nonces map[types.HRSTKey][]Nonces
+	nonces map[types.HRSTKey][]cipher.Nonces
 }
 
-func (ccs *ChainState) combinedNonces(myID int, threshold uint8, hrst types.HRSTKey) ([]Nonce, error) {
+func (ccs *ChainState) combinedNonces(myID int, threshold uint8, hrst types.HRSTKey) ([]cipher.Nonce, error) {
 	ccs.mu.RLock()
 	defer ccs.mu.RUnlock()
 
@@ -67,7 +70,7 @@ func (ccs *ChainState) combinedNonces(myID int, threshold uint8, hrst types.HRST
 		return nil, errors.New("no metadata at HRS")
 	}
 
-	combinedNonces := make([]Nonce, 0, threshold)
+	combinedNonces := make([]cipher.Nonce, 0, threshold)
 
 	// calculate secret and public keys
 	for _, c := range nonces {
@@ -75,7 +78,7 @@ func (ccs *ChainState) combinedNonces(myID int, threshold uint8, hrst types.HRST
 			continue
 		}
 
-		combinedNonces = append(combinedNonces, Nonce{
+		combinedNonces = append(combinedNonces, cipher.Nonce{
 			Share:  c.Shares[myID-1],
 			PubKey: c.PubKey,
 		})
@@ -162,7 +165,7 @@ func (cosigner *LocalCosigner) GetPubKey(chainID string) (cometcrypto.PubKey, er
 }
 
 // CombineSignatures combines partial signatures into a full signature.
-func (cosigner *LocalCosigner) CombineSignatures(chainID string, signatures []PartialSignature) ([]byte, error) {
+func (cosigner *LocalCosigner) CombineSignatures(chainID string, signatures []cipher.PartialSignature) ([]byte, error) {
 	ccs, err := cosigner.getChainState(chainID)
 	if err != nil {
 		return nil, err
@@ -258,7 +261,7 @@ func (cosigner *LocalCosigner) sign(req CosignerSignRequest) (CosignerSignRespon
 	return res, nil
 }
 
-func (cosigner *LocalCosigner) dealShares(req CosignerGetNonceRequest) ([]Nonces, error) {
+func (cosigner *LocalCosigner) dealShares(req CosignerGetNonceRequest) ([]cipher.Nonces, error) {
 	chainID := req.ChainID
 
 	ccs, err := cosigner.getChainState(chainID)
@@ -266,7 +269,7 @@ func (cosigner *LocalCosigner) dealShares(req CosignerGetNonceRequest) ([]Nonces
 		return nil, err
 	}
 
-	meta := make([]Nonces, len(cosigner.Config.Config.ThresholdModeConfig.Cosigners))
+	meta := make([]cipher.Nonces, len(cosigner.Config.Config.ThresholdModeConfig.Cosigners))
 
 	nonces, err := ccs.signer.GenerateNonces()
 	if err != nil {
@@ -292,7 +295,7 @@ func (cosigner *LocalCosigner) LoadSignStateIfNecessary(chainID string) error {
 		return err
 	}
 
-	var signer IThresholdSigner
+	var signer cipher.IThresholdSigner
 
 	signer, err = NewThresholdSignerSoft(cosigner.Config, cosigner.GetID(), chainID)
 	if err != nil {
@@ -301,7 +304,7 @@ func (cosigner *LocalCosigner) LoadSignStateIfNecessary(chainID string) error {
 
 	cosigner.chainStateMap.Store(chainID, &ChainState{
 		lastSignState: signState,
-		nonces:        make(map[types.HRSTKey][]Nonces),
+		nonces:        make(map[types.HRSTKey][]cipher.Nonces),
 		signer:        signer,
 	})
 
@@ -376,7 +379,7 @@ func (cosigner *LocalCosigner) GetNonces(
 	return res, nil
 }
 
-func (cosigner *LocalCosigner) dealSharesIfNecessary(chainID string, hrst types.HRSTKey) ([]Nonces, error) {
+func (cosigner *LocalCosigner) dealSharesIfNecessary(chainID string, hrst types.HRSTKey) ([]cipher.Nonces, error) {
 	ccs, err := cosigner.getChainState(chainID)
 	if err != nil {
 		return nil, err

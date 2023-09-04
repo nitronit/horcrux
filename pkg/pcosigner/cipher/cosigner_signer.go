@@ -1,4 +1,4 @@
-package pcosigner
+package cipher
 
 import (
 	"encoding/json"
@@ -74,23 +74,6 @@ func CreateCosignerEd25519Shards(pv privval.FilePVKey, threshold, shards uint8) 
 		}
 	}
 	return out
-}
-
-// CreateCosignerRSAShards generate  CosignerRSAKey objects.
-func CreateCosignerRSAShards(shards int) ([]CosignerRSAKey, error) {
-	rsaKeys, pubKeys, err := makeRSAKeys(shards)
-	if err != nil {
-		return nil, err
-	}
-	out := make([]CosignerRSAKey, shards)
-	for i, key := range rsaKeys {
-		out[i] = CosignerRSAKey{
-			ID:      i + 1,
-			RSAKey:  *key,
-			RSAPubs: pubKeys,
-		}
-	}
-	return out, nil
 }
 
 // ReadPrivValidatorFile reads in a privval.FilePVKey from a given file.

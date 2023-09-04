@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/strangelove-ventures/horcrux/pkg/pcosigner/signer"
-	"github.com/strangelove-ventures/horcrux/pkg/pcosigner/signer/shamirCosign"
+	"github.com/strangelove-ventures/horcrux/pkg/pcosigner/signer/shamircosign"
 
 	"github.com/strangelove-ventures/horcrux/pkg/pcosigner"
 	"github.com/strangelove-ventures/horcrux/pkg/types"
@@ -41,7 +41,7 @@ type ThresholdValidator struct {
 
 	grpcTimeout time.Duration
 
-	chainState         sync.Map
+	chainState         sync.Map       // A chainState to keep track fo the last sign state
 	thresholdalgorithm signer.ISigner // This is our threshold implementation. It should be injected
 
 	leader ILeader // The Raft leader
@@ -82,7 +82,7 @@ func NewThresholdValidator(
 		threshold:                   threshold,
 		grpcTimeout:                 grpcTimeout,
 		maxWaitForSameBlockAttempts: maxWaitForSameBlockAttempts,
-		thresholdalgorithm: shamirCosign.NewShamirCosign(
+		thresholdalgorithm: shamircosign.NewShamirCosign(
 			logger,
 			myCosigner,
 			peerCosigners),

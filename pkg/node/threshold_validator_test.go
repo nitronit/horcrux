@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/strangelove-ventures/horcrux/pkg/pcosigner"
+	"github.com/strangelove-ventures/horcrux/pkg/pcosigner/cipher"
 
 	"os"
 	"testing"
@@ -56,7 +57,7 @@ func loadKeyForLocalCosigner(
 	chainID string,
 	privateShard []byte,
 ) error {
-	key := pcosigner.CosignerEd25519Key{
+	key := cipher.CosignerEd25519Key{
 		PubKey:       pubKey,
 		PrivateShard: privateShard,
 		ID:           cosigner.GetID(),
@@ -274,9 +275,9 @@ func getTestLocalCosigners(t *testing.T, threshold, total uint8) ([]*pcosigner.L
 	cosigners := make([]*pcosigner.LocalCosigner, total)
 
 	for i := uint8(0); i < total; i++ {
+		fmt.Printf("Generating key for cosigner %d\n", i)
 		eciesKey, err := ecies.GenerateKey(rand.Reader, secp256k1.S256(), nil)
 		require.NoError(t, err)
-
 		eciesKeys[i] = eciesKey
 
 		pubKeys[i] = &eciesKey.PublicKey
@@ -313,6 +314,8 @@ func getTestLocalCosigners(t *testing.T, threshold, total uint8) ([]*pcosigner.L
 			},
 		}
 
+		cosign := pcosigner.NewCosign(int(i+1), "")
+		fmt.Printf("Cosign %d: %v\n", i, cosign)
 		cosigner := pcosigner.NewLocalCosigner(
 			cometlog.NewNopLogger(),
 			cosignerConfig,
@@ -323,12 +326,13 @@ func getTestLocalCosigners(t *testing.T, threshold, total uint8) ([]*pcosigner.L
 					ECIESPubs: pubKeys,
 				},
 			),
-			pcosigner.NewCosign(i+1, ""),
+			cosign,
 		)
+
 		require.NoError(t, err)
 
+		fmt.Printf("Cosigner %d: %v\n", i, cosigner.GetID())
 		cosigners[i] = cosigner
-
 		err = loadKeyForLocalCosigner(cosigner, privateKey.PubKey(), testChainID, privShards[i])
 		require.NoError(t, err)
 
@@ -346,6 +350,7 @@ func testThresholdValidatorLeaderElection(t *testing.T, threshold, total uint8) 
 	var leader *ThresholdValidator
 	leaders := make([]*MockLeader, total)
 	for i, cosigner := range cosigners {
+		fmt.Printf("Cosigner %d: %v\n", i, cosigner.GetID())
 		peers := make([]pcosigner.IRemoteCosigner, 0, len(cosigners)-1)
 		for j, otherCosigner := range cosigners {
 			if i != j {

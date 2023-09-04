@@ -11,6 +11,23 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
+// CreateCosignerRSAShards generate  CosignerRSAKey objects.
+func CreateCosignerRSAShards(shards int) ([]CosignerRSAKey, error) {
+	rsaKeys, pubKeys, err := makeRSAKeys(shards)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]CosignerRSAKey, shards)
+	for i, key := range rsaKeys {
+		out[i] = CosignerRSAKey{
+			ID:      i + 1,
+			RSAKey:  *key,
+			RSAPubs: pubKeys,
+		}
+	}
+	return out, nil
+}
+
 // WriteCosignerRSAShardFile writes a cosigner RSA key to a given file name.
 func WriteCosignerRSAShardFile(cosigner CosignerRSAKey, file string) error {
 	jsonBytes, err := json.Marshal(&cosigner)

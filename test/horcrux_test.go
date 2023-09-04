@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/strangelove-ventures/horcrux/pkg/pcosigner"
+	"github.com/strangelove-ventures/horcrux/pkg/pcosigner/cipher"
 
 	"sync"
 	"testing"
@@ -354,7 +355,7 @@ func TestMultipleChainHorcrux(t *testing.T) {
 	for i := 0; i < totalChains; i++ {
 		chainConfigs[i] = &cosignerChainConfig{
 			sentries: make([]cosmos.ChainNodes, sentriesPerSigner),
-			shards:   make([]pcosigner.CosignerEd25519Key, totalSigners),
+			shards:   make([]cipher.CosignerEd25519Key, totalSigners),
 		}
 	}
 
@@ -446,7 +447,7 @@ func TestMultipleChainHorcrux(t *testing.T) {
 
 type cosignerChainConfig struct {
 	chainID  string
-	shards   []pcosigner.CosignerEd25519Key
+	shards   []cipher.CosignerEd25519Key
 	sentries []cosmos.ChainNodes
 }
 

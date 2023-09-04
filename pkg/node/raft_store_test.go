@@ -8,6 +8,7 @@ import (
 
 	"github.com/strangelove-ventures/horcrux/pkg/node"
 	"github.com/strangelove-ventures/horcrux/pkg/pcosigner"
+	"github.com/strangelove-ventures/horcrux/pkg/pcosigner/cipher"
 
 	cometcryptoed25519 "github.com/cometbft/cometbft/crypto/ed25519"
 	"github.com/cometbft/cometbft/libs/log"
@@ -27,7 +28,7 @@ func Test_StoreInMemOpenSingleNode(t *testing.T) {
 	eciesKey, err := ecies.GenerateKey(rand.Reader, secp256k1.S256(), nil)
 	require.NoError(t, err)
 
-	key := pcosigner.CosignerEd25519Key{
+	key := cipher.CosignerEd25519Key{
 		PubKey:       dummyPub,
 		PrivateShard: []byte{},
 		ID:           1,

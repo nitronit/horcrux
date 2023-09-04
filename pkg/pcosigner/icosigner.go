@@ -3,6 +3,7 @@ package pcosigner
 // TODO: Move back to Cosigner Package
 import (
 	cometcrypto "github.com/cometbft/cometbft/crypto"
+	"github.com/strangelove-ventures/horcrux/pkg/pcosigner/cipher"
 	"github.com/strangelove-ventures/horcrux/pkg/types"
 )
 
@@ -34,7 +35,7 @@ type ILocalCosigner interface {
 	WaitForSignStatesToFlushToDisk()
 	LoadSignStateIfNecessary(id string) error
 	SaveLastSignedState(id string, consensus types.SignStateConsensus) error
-	CombineSignatures(id string, sigs []PartialSignature) ([]byte, error)
+	CombineSignatures(id string, sigs []cipher.PartialSignature) ([]byte, error)
 }
 
 func FromILocalToICosigner(iface ILocalCosigner) []ICosigner {

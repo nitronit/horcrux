@@ -20,6 +20,8 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/strangelove-ventures/horcrux/pkg/pcosigner/cipher"
+
 	"github.com/strangelove-ventures/horcrux/pkg/pcosigner"
 
 	"github.com/spf13/cobra"
@@ -113,7 +115,7 @@ func createCosignerEd25519ShardsCmd() *cobra.Command {
 				return nil
 			}
 
-			csKeys, err := pcosigner.CreateCosignerEd25519ShardsFromFile(keyFile, threshold, shards)
+			csKeys, err := cipher.CreateCosignerEd25519ShardsFromFile(keyFile, threshold, shards)
 			if err != nil {
 				return err
 			}
@@ -134,7 +136,7 @@ func createCosignerEd25519ShardsCmd() *cobra.Command {
 					return err
 				}
 				filename := filepath.Join(dir, fmt.Sprintf("%s_shard.json", chainID))
-				if err = pcosigner.WriteCosignerEd25519ShardFile(c, filename); err != nil {
+				if err = cipher.WriteCosignerEd25519ShardFile(c, filename); err != nil {
 					return err
 				}
 				fmt.Fprintf(cmd.OutOrStdout(), "Created Ed25519 Shard %s\n", filename)

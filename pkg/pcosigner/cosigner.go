@@ -1,12 +1,42 @@
 package pcosigner
 
 import (
+	"fmt"
 	"time"
 
+	"github.com/strangelove-ventures/horcrux/pkg/pcosigner/cipher"
 	"github.com/strangelove-ventures/horcrux/pkg/types"
 
 	"github.com/strangelove-ventures/horcrux/pkg/proto"
 )
+
+func NewThresholdSignerSoft(config *RuntimeConfig, id int, chainID string) (*cipher.ThresholdSignerSoft, error) {
+	keyFile, err := config.KeyFileExistsCosigner(chainID)
+	if err != nil {
+		return nil, err
+	}
+
+	key, err := cipher.LoadCosignerEd25519Key(keyFile)
+	if err != nil {
+		return nil, fmt.Errorf("error reading cosigner key: %s", err)
+	}
+
+	if key.ID != id {
+		return nil, fmt.Errorf("key shard ID (%d) in (%s) does not match cosigner ID (%d)", key.ID, keyFile, id)
+	}
+	privateKeyShard := key.PrivateShard
+	pubKey := key.PubKey.Bytes()
+	threshold := uint8(config.Config.ThresholdModeConfig.Threshold)
+	total := uint8(len(config.Config.ThresholdModeConfig.Cosigners))
+
+	s, err := cipher.NewThresholdSignerSoft(
+		privateKeyShard,
+		pubKey,
+		threshold,
+		total)
+
+	return &s, nil
+}
 
 type Cosigner struct {
 	id      int

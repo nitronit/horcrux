@@ -7,6 +7,9 @@ import (
 	"github.com/strangelove-ventures/horcrux/pkg/types"
 )
 
+// ISigner is responsible for signing the block and verifying the signature
+// This abstracts the threshold signature verification, so we can implements multiple "cosigners"
+// Ususally this is implemented by a Cosigner node that embedds a local cosigner, []remote cosigners those are responsible for communicatating with the other nodes on the network.
 type ISigner interface {
 	// SignAndVerify is responsible for signing the block and verifying the signature
 	// It absracts the threshold signature verification
@@ -18,6 +21,8 @@ type ISigner interface {
 
 	// SaveLastSignedState saves the last sign state in the "high watermark" file at the cosigner lever.
 	SaveLastSignedState(chainID string, signStateConsensus types.SignStateConsensus) error
+
+	// TODO: Potentially add generate?
 	/*
 
 		// TODO: This should be the job of ThresholdValidator

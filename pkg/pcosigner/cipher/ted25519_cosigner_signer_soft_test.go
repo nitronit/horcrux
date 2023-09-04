@@ -1,4 +1,4 @@
-package pcosigner
+package cipher_test
 
 import (
 	"crypto/ed25519"
@@ -11,6 +11,7 @@ import (
 
 	cometproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	comet "github.com/cometbft/cometbft/types"
+	"github.com/strangelove-ventures/horcrux/pkg/pcosigner/cipher"
 	"github.com/stretchr/testify/require"
 	tsed25519 "gitlab.com/unit410/threshold-ed25519/pkg"
 )
@@ -25,18 +26,19 @@ func TestThresholdSignerSoft_GenerateNonces(t *testing.T) {
 	tests := []struct {
 		name    string
 		fields  fields
-		want    Nonces
+		want    cipher.Nonces
 		wantErr bool
 	}{
 		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			s := &ThresholdSignerSoft{
-				privateKeyShard: tt.fields.privateKeyShard,
-				pubKey:          tt.fields.pubKey,
-				threshold:       tt.fields.threshold,
-				total:           tt.fields.total,
+			s, err := cipher.NewThresholdSignerSoft(
+				tt.fields.privateKeyShard, tt.fields.pubKey, tt.fields.threshold, tt.fields.total)
+
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ThresholdSignerSoft.NewThresholdSignerSoft() error = %v, wantErr %v", err, tt.wantErr)
+				return
 			}
 			got, err := s.GenerateNonces()
 			if (err != nil) != tt.wantErr {

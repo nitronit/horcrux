@@ -9,6 +9,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/strangelove-ventures/horcrux/pkg/pcosigner/cipher"
+
 	"github.com/strangelove-ventures/horcrux/pkg/types"
 
 	cometcryptoed25519 "github.com/cometbft/cometbft/crypto/ed25519"
@@ -131,7 +133,7 @@ func testLocalCosignerSign(t *testing.T, threshold, total uint8, security []ICos
 	for i := 0; i < int(total); i++ {
 		id := i + 1
 
-		key := CosignerEd25519Key{
+		key := cipher.CosignerEd25519Key{
 			PubKey:       pubKey,
 			PrivateShard: privShards[i],
 			ID:           id,
@@ -189,7 +191,7 @@ func testLocalCosignerSign(t *testing.T, threshold, total uint8, security []ICos
 
 	signBytes := comet.VoteSignBytes("chain-id", &vote)
 
-	sigs := make([]PartialSignature, threshold)
+	sigs := make([]cipher.PartialSignature, threshold)
 
 	for i, cosigner := range thresholdCosigners {
 		cosignerNonces := make([]CosignNonce, 0, threshold-1)
@@ -214,7 +216,7 @@ func testLocalCosignerSign(t *testing.T, threshold, total uint8, security []ICos
 		})
 		require.NoError(t, err)
 
-		sigs[i] = PartialSignature{
+		sigs[i] = cipher.PartialSignature{
 			ID:        cosigner.GetID(),
 			Signature: sigRes.Signature,
 		}

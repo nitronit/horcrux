@@ -1,4 +1,4 @@
-package shamirCosign
+package shamircosign
 
 import (
 	"errors"
@@ -6,6 +6,8 @@ import (
 	"runtime"
 	"sync"
 	"time"
+
+	"github.com/strangelove-ventures/horcrux/pkg/pcosigner/cipher"
 
 	"github.com/strangelove-ventures/horcrux/pkg/pcosigner"
 
@@ -37,7 +39,8 @@ type ShamirCosign struct {
 	pendingDiskWG sync.WaitGroup
 }
 
-func NewShamirCosign(logger log.Logger, myCosigner pcosigner.ILocalCosigner, peerCosigners []pcosigner.IRemoteCosigner) *ShamirCosign {
+func NewShamirCosign(
+	logger log.Logger, myCosigner pcosigner.ILocalCosigner, peerCosigners []pcosigner.IRemoteCosigner) *ShamirCosign {
 	return &ShamirCosign{
 		logger:        logger,
 		LocalCosign:   myCosigner,
@@ -131,9 +134,11 @@ func (s *ShamirCosign) LoadSignStateIfNecessary(chainID string) error {
 func (s *ShamirCosign) SaveLastSignedState(chainID string, signStateConsensus types.SignStateConsensus) error {
 	return s.LocalCosign.SaveLastSignedState(chainID, signStateConsensus)
 }
-func (s *ShamirCosign) SignAndVerify(chainID string, threshold int, hrst types.HRSTKey, grpcTimeout time.Duration, stamp time.Time, timeStartSignBlock time.Time, signBytes []byte) ([]byte, bool, error) {
+func (s *ShamirCosign) SignAndVerify(
+	chainID string, threshold int, hrst types.HRSTKey, grpcTimeout time.Duration, stamp time.Time, timeStartSignBlock time.Time, signBytes []byte) ([]byte, bool, error) {
 	signature, _, err := s.sign(chainID, threshold, hrst, grpcTimeout, stamp, timeStartSignBlock, signBytes)
 	if err != nil {
+		// TODO Delete
 		_, filename, line, _ := runtime.Caller(1)
 		logg.Printf("sign [error] %s:%d %v", filename, line, err)
 		return nil, false, err
@@ -146,7 +151,8 @@ func (s *ShamirCosign) SignAndVerify(chainID string, threshold int, hrst types.H
 }
 
 func (s *ShamirCosign) sign(
-	chainID string, threshold int, hrst types.HRSTKey, grpcTimeout time.Duration, stamp time.Time, timeStartSignBlock time.Time, signBytes []byte) ([]byte, time.Time, error) {
+	chainID string, threshold int, hrst types.HRSTKey, grpcTimeout time.Duration,
+	stamp time.Time, timeStartSignBlock time.Time, signBytes []byte) ([]byte, time.Time, error) {
 	numPeers := len(s.PeerCosigners)
 	total := uint8(numPeers + 1)
 	getEphemeralWaitGroup := sync.WaitGroup{}
@@ -235,7 +241,7 @@ func (s *ShamirCosign) sign(
 		"step", hrst.Step,
 	)
 	// collect all valid responses into array of partial signatures
-	shareSigs := make([]pcosigner.PartialSignature, 0, threshold)
+	shareSigs := make([]cipher.PartialSignature, 0, threshold)
 	for idx, shareSig := range shareSignatures {
 		if len(shareSig) == 0 {
 			continue
@@ -243,7 +249,7 @@ func (s *ShamirCosign) sign(
 
 		// we are ok to use the share signatures - complete boolean
 		// prevents future concurrent access
-		shareSigs = append(shareSigs, pcosigner.PartialSignature{
+		shareSigs = append(shareSigs, cipher.PartialSignature{
 			ID:        idx + 1,
 			Signature: shareSig,
 		})

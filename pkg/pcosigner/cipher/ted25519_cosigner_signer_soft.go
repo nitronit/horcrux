@@ -1,4 +1,4 @@
-package pcosigner
+package cipher
 
 import (
 	"bytes"
@@ -21,29 +21,15 @@ type ThresholdSignerSoft struct {
 
 }
 
-func NewThresholdSignerSoft(config *RuntimeConfig, id int, chainID string) (*ThresholdSignerSoft, error) {
-	keyFile, err := config.KeyFileExistsCosigner(chainID)
-	if err != nil {
-		return nil, err
-	}
-
-	key, err := LoadCosignerEd25519Key(keyFile)
-	if err != nil {
-		return nil, fmt.Errorf("error reading cosigner key: %s", err)
-	}
-
-	if key.ID != id {
-		return nil, fmt.Errorf("key shard ID (%d) in (%s) does not match cosigner ID (%d)", key.ID, keyFile, id)
-	}
-
+func NewThresholdSignerSoft(privateKeyShard []byte, pubKey []byte, threshold, total uint8) (ThresholdSignerSoft, error) {
 	s := ThresholdSignerSoft{
-		privateKeyShard: key.PrivateShard,
-		pubKey:          key.PubKey.Bytes(),
-		threshold:       uint8(config.Config.ThresholdModeConfig.Threshold),
-		total:           uint8(len(config.Config.ThresholdModeConfig.Cosigners)),
+		privateKeyShard: privateKeyShard,
+		pubKey:          pubKey,
+		threshold:       threshold,
+		total:           total,
 	}
 
-	return &s, nil
+	return s, nil
 }
 
 // GetPubkey implements the IThresholdSigner interface
