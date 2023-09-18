@@ -1,7 +1,7 @@
 package types
 
 import (
-	"github.com/strangelove-ventures/horcrux/pkg/proto"
+	proto "github.com/strangelove-ventures/horcrux/pkg/proto/cosigner_service/shamirService"
 )
 
 // HRSKey represents the key for the HRS metadata map.

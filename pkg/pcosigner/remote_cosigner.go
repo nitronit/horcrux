@@ -15,7 +15,7 @@ import (
 
 	"github.com/strangelove-ventures/horcrux/pkg/types"
 
-	"github.com/strangelove-ventures/horcrux/pkg/proto"
+	proto "github.com/strangelove-ventures/horcrux/pkg/proto/cosigner_service/shamirService"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )

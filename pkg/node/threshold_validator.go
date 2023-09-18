@@ -20,7 +20,7 @@ import (
 	cometrpcjsontypes "github.com/cometbft/cometbft/rpc/jsonrpc/types"
 	comet "github.com/cometbft/cometbft/types"
 	"github.com/strangelove-ventures/horcrux/pkg/metrics"
-	"github.com/strangelove-ventures/horcrux/pkg/proto"
+	proto "github.com/strangelove-ventures/horcrux/pkg/proto/cosigner_service/shamirService"
 )
 
 // Makes sure  ThresholdValitator implements IPrivValidator, a wrapper around

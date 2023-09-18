@@ -6,12 +6,12 @@ import (
 	"time"
 
 	"github.com/strangelove-ventures/horcrux/pkg/pcosigner"
+	"github.com/strangelove-ventures/horcrux/pkg/proto/raft_service/raftService"
 
 	grpcretry "github.com/grpc-ecosystem/go-grpc-middleware/retry"
 	"github.com/spf13/cobra"
 	"github.com/strangelove-ventures/horcrux/client"
 	"github.com/strangelove-ventures/horcrux/pkg/multiresolver"
-	"github.com/strangelove-ventures/horcrux/pkg/proto"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
@@ -70,16 +70,16 @@ horcrux elect 2 # elect specific leader`,
 			ctx, cancelFunc := context.WithTimeout(context.Background(), 30*time.Second)
 			defer cancelFunc()
 
-			grpcClient := proto.NewIRaftGRPCClient(conn)
+			grpcClient := raftService.NewIRaftGRPCClient(conn)
 			_, err = grpcClient.TransferLeadership(
 				ctx,
-				&proto.RaftGRPCTransferLeadershipRequest{LeaderID: leaderID},
+				&raftService.RaftGRPCTransferLeadershipRequest{LeaderID: leaderID},
 			)
 			if err != nil {
 				return err
 			}
 
-			res, err := grpcClient.GetLeader(ctx, &proto.RaftGRPCGetLeaderRequest{})
+			res, err := grpcClient.GetLeader(ctx, &raftService.RaftGRPCGetLeaderRequest{})
 			if err != nil {
 				return err
 			}
@@ -167,9 +167,9 @@ func getLeaderCmd() *cobra.Command {
 			ctx, cancelFunc := context.WithTimeout(context.Background(), 30*time.Second)
 			defer cancelFunc()
 
-			grpcClient := proto.NewIRaftGRPCClient(conn)
+			grpcClient := raftService.NewIRaftGRPCClient(conn)
 
-			res, err := grpcClient.GetLeader(ctx, &proto.RaftGRPCGetLeaderRequest{})
+			res, err := grpcClient.GetLeader(ctx, &raftService.RaftGRPCGetLeaderRequest{})
 			if err != nil {
 				return err
 			}

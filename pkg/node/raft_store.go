@@ -28,7 +28,7 @@ import (
 	"github.com/cometbft/cometbft/libs/service"
 	"github.com/hashicorp/raft"
 	boltdb "github.com/hashicorp/raft-boltdb/v2"
-	"github.com/strangelove-ventures/horcrux/pkg/proto"
+	proto "github.com/strangelove-ventures/horcrux/pkg/proto/cosigner_service/shamirService"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/reflection"

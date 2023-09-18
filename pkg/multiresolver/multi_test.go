@@ -10,12 +10,14 @@ import (
 	"time"
 
 	"github.com/cometbft/cometbft/libs/log"
+	
 	"github.com/strangelove-ventures/horcrux/pkg/node"
+	"github.com/strangelove-ventures/horcrux/pkg/proto/cosigner_service/shamirService"
+	"github.com/strangelove-ventures/horcrux/pkg/proto/raft_service/raftService"
 	"github.com/strangelove-ventures/horcrux/pkg/pcosigner"
 
 	grpcretry "github.com/grpc-ecosystem/go-grpc-middleware/retry"
 	"github.com/strangelove-ventures/horcrux/pkg/multiresolver"
-	"github.com/strangelove-ventures/horcrux/pkg/proto"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -62,7 +64,7 @@ func createListener(nodeID string, homedir string) (string, func(), error) {
 	}
 
 	grpcServer := grpc.NewServer()
-	proto.RegisterICosignerGRPCServer(grpcServer, node.NewGRPCServer(localcosign, s))
+	shamirService.RegisterICosignerGRPCServer(grpcServer, node.NewGRPCServer(localcosign, s))
 	transportManager.Register(grpcServer)
 
 	go func() {
@@ -113,8 +115,8 @@ func TestMultiResolver(t *testing.T) {
 	ctx, cancelFunc := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancelFunc()
 
-	grpcClient := proto.NewIRaftGRPCClient(connDNS)
-	_, err = grpcClient.GetLeader(ctx, &proto.RaftGRPCGetLeaderRequest{})
+	grpcClient := raftService.NewIRaftGRPCClient(connDNS)
+	_, err = grpcClient.GetLeader(ctx, &raftService.RaftGRPCGetLeaderRequest{})
 	require.NoError(t, err)
 
 	connIP, err := grpc.Dial(targetIP,
@@ -126,7 +128,7 @@ func TestMultiResolver(t *testing.T) {
 	require.NoError(t, err)
 	defer connIP.Close()
 
-	grpcClient = proto.NewIRaftGRPCClient(connIP)
-	_, err = grpcClient.GetLeader(ctx, &proto.RaftGRPCGetLeaderRequest{})
+	grpcClient = raftService.NewIRaftGRPCClient(connIP)
+	_, err = grpcClient.GetLeader(ctx, &raftService.RaftGRPCGetLeaderRequest{})
 	require.NoError(t, err)
 }
