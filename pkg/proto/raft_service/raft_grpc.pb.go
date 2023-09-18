@@ -2,9 +2,9 @@
 // versions:
 // - protoc-gen-go-grpc v1.2.0
 // - protoc             v3.13.0
-// source: cosigner_grpc_server.proto
+// source: raft_service/raft.proto
 
-package proto
+package raftService
 
 import (
 	context "context"
@@ -17,128 +17,6 @@ import (
 // is compatible with the grpc package it is being compiled against.
 // Requires gRPC-Go v1.32.0 or later.
 const _ = grpc.SupportPackageIsVersion7
-
-// ICosignerGRPCClient is the client API for ICosignerGRPC service.
-//
-// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type ICosignerGRPCClient interface {
-	SetNoncesAndSign(ctx context.Context, in *CosignerGRPCSetNoncesAndSignRequest, opts ...grpc.CallOption) (*CosignerGRPCSetNoncesAndSignResponse, error)
-	GetNonces(ctx context.Context, in *CosignerGRPCGetNoncesRequest, opts ...grpc.CallOption) (*CosignerGRPCGetNoncesResponse, error)
-}
-
-type iCosignerGRPCClient struct {
-	cc grpc.ClientConnInterface
-}
-
-func NewICosignerGRPCClient(cc grpc.ClientConnInterface) ICosignerGRPCClient {
-	return &iCosignerGRPCClient{cc}
-}
-
-func (c *iCosignerGRPCClient) SetNoncesAndSign(ctx context.Context, in *CosignerGRPCSetNoncesAndSignRequest, opts ...grpc.CallOption) (*CosignerGRPCSetNoncesAndSignResponse, error) {
-	out := new(CosignerGRPCSetNoncesAndSignResponse)
-	err := c.cc.Invoke(ctx, "/proto.ICosignerGRPC/SetNoncesAndSign", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *iCosignerGRPCClient) GetNonces(ctx context.Context, in *CosignerGRPCGetNoncesRequest, opts ...grpc.CallOption) (*CosignerGRPCGetNoncesResponse, error) {
-	out := new(CosignerGRPCGetNoncesResponse)
-	err := c.cc.Invoke(ctx, "/proto.ICosignerGRPC/GetNonces", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-// ICosignerGRPCServer is the server API for ICosignerGRPC service.
-// All implementations must embed UnimplementedICosignerGRPCServer
-// for forward compatibility
-type ICosignerGRPCServer interface {
-	SetNoncesAndSign(context.Context, *CosignerGRPCSetNoncesAndSignRequest) (*CosignerGRPCSetNoncesAndSignResponse, error)
-	GetNonces(context.Context, *CosignerGRPCGetNoncesRequest) (*CosignerGRPCGetNoncesResponse, error)
-	mustEmbedUnimplementedICosignerGRPCServer()
-}
-
-// UnimplementedICosignerGRPCServer must be embedded to have forward compatible implementations.
-type UnimplementedICosignerGRPCServer struct {
-}
-
-func (UnimplementedICosignerGRPCServer) SetNoncesAndSign(context.Context, *CosignerGRPCSetNoncesAndSignRequest) (*CosignerGRPCSetNoncesAndSignResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method SetNoncesAndSign not implemented")
-}
-func (UnimplementedICosignerGRPCServer) GetNonces(context.Context, *CosignerGRPCGetNoncesRequest) (*CosignerGRPCGetNoncesResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetNonces not implemented")
-}
-func (UnimplementedICosignerGRPCServer) mustEmbedUnimplementedICosignerGRPCServer() {}
-
-// UnsafeICosignerGRPCServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to ICosignerGRPCServer will
-// result in compilation errors.
-type UnsafeICosignerGRPCServer interface {
-	mustEmbedUnimplementedICosignerGRPCServer()
-}
-
-func RegisterICosignerGRPCServer(s grpc.ServiceRegistrar, srv ICosignerGRPCServer) {
-	s.RegisterService(&ICosignerGRPC_ServiceDesc, srv)
-}
-
-func _ICosignerGRPC_SetNoncesAndSign_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CosignerGRPCSetNoncesAndSignRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ICosignerGRPCServer).SetNoncesAndSign(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/proto.ICosignerGRPC/SetNoncesAndSign",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ICosignerGRPCServer).SetNoncesAndSign(ctx, req.(*CosignerGRPCSetNoncesAndSignRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _ICosignerGRPC_GetNonces_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CosignerGRPCGetNoncesRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ICosignerGRPCServer).GetNonces(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/proto.ICosignerGRPC/GetNonces",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ICosignerGRPCServer).GetNonces(ctx, req.(*CosignerGRPCGetNoncesRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-// ICosignerGRPC_ServiceDesc is the grpc.ServiceDesc for ICosignerGRPC service.
-// It's only intended for direct use with grpc.RegisterService,
-// and not to be introspected or modified (even as a copy)
-var ICosignerGRPC_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "proto.ICosignerGRPC",
-	HandlerType: (*ICosignerGRPCServer)(nil),
-	Methods: []grpc.MethodDesc{
-		{
-			MethodName: "SetNoncesAndSign",
-			Handler:    _ICosignerGRPC_SetNoncesAndSign_Handler,
-		},
-		{
-			MethodName: "GetNonces",
-			Handler:    _ICosignerGRPC_GetNonces_Handler,
-		},
-	},
-	Streams:  []grpc.StreamDesc{},
-	Metadata: "cosigner_grpc_server.proto",
-}
 
 // IRaftGRPCClient is the client API for IRaftGRPC service.
 //
@@ -159,7 +37,7 @@ func NewIRaftGRPCClient(cc grpc.ClientConnInterface) IRaftGRPCClient {
 
 func (c *iRaftGRPCClient) SignBlock(ctx context.Context, in *RaftGRPCSignBlockRequest, opts ...grpc.CallOption) (*RaftGRPCSignBlockResponse, error) {
 	out := new(RaftGRPCSignBlockResponse)
-	err := c.cc.Invoke(ctx, "/proto.IRaftGRPC/SignBlock", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/raftService.IRaftGRPC/SignBlock", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -168,7 +46,7 @@ func (c *iRaftGRPCClient) SignBlock(ctx context.Context, in *RaftGRPCSignBlockRe
 
 func (c *iRaftGRPCClient) TransferLeadership(ctx context.Context, in *RaftGRPCTransferLeadershipRequest, opts ...grpc.CallOption) (*RaftGRPCTransferLeadershipResponse, error) {
 	out := new(RaftGRPCTransferLeadershipResponse)
-	err := c.cc.Invoke(ctx, "/proto.IRaftGRPC/TransferLeadership", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/raftService.IRaftGRPC/TransferLeadership", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -177,7 +55,7 @@ func (c *iRaftGRPCClient) TransferLeadership(ctx context.Context, in *RaftGRPCTr
 
 func (c *iRaftGRPCClient) GetLeader(ctx context.Context, in *RaftGRPCGetLeaderRequest, opts ...grpc.CallOption) (*RaftGRPCGetLeaderResponse, error) {
 	out := new(RaftGRPCGetLeaderResponse)
-	err := c.cc.Invoke(ctx, "/proto.IRaftGRPC/GetLeader", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/raftService.IRaftGRPC/GetLeader", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -230,7 +108,7 @@ func _IRaftGRPC_SignBlock_Handler(srv interface{}, ctx context.Context, dec func
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/proto.IRaftGRPC/SignBlock",
+		FullMethod: "/raftService.IRaftGRPC/SignBlock",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(IRaftGRPCServer).SignBlock(ctx, req.(*RaftGRPCSignBlockRequest))
@@ -248,7 +126,7 @@ func _IRaftGRPC_TransferLeadership_Handler(srv interface{}, ctx context.Context,
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/proto.IRaftGRPC/TransferLeadership",
+		FullMethod: "/raftService.IRaftGRPC/TransferLeadership",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(IRaftGRPCServer).TransferLeadership(ctx, req.(*RaftGRPCTransferLeadershipRequest))
@@ -266,7 +144,7 @@ func _IRaftGRPC_GetLeader_Handler(srv interface{}, ctx context.Context, dec func
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/proto.IRaftGRPC/GetLeader",
+		FullMethod: "/raftService.IRaftGRPC/GetLeader",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(IRaftGRPCServer).GetLeader(ctx, req.(*RaftGRPCGetLeaderRequest))
@@ -278,7 +156,7 @@ func _IRaftGRPC_GetLeader_Handler(srv interface{}, ctx context.Context, dec func
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var IRaftGRPC_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "proto.IRaftGRPC",
+	ServiceName: "raftService.IRaftGRPC",
 	HandlerType: (*IRaftGRPCServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -295,5 +173,5 @@ var IRaftGRPC_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "cosigner_grpc_server.proto",
+	Metadata: "raft_service/raft.proto",
 }

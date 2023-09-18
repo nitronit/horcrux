@@ -1,0 +1,52 @@
+syntax = "proto3";
+
+package shamirService;
+option go_package = "github.com/strangelove-ventures/horcrux/pkg/cosigner_service/shamirService";
+/*option go_package = "shamirService";*/
+
+// TODO: Change name to CosignerService?
+// CosignerGRPC handles all the cosigner level "services"
+// All RPCs in ICosignerGRPCS are Unary. This means the client sends a single request to the 
+// server and gets a single response back, just like a normal function call.
+service ICosignerGRPC {
+		rpc SetNoncesAndSign (CosignerGRPCSetNoncesAndSignRequest) returns (CosignerGRPCSetNoncesAndSignResponse) {}
+  		rpc GetNonces (CosignerGRPCGetNoncesRequest) returns (CosignerGRPCGetNoncesResponse) {}
+
+}
+
+message Nonce {
+	int32 sourceID = 1;
+	int32 destinationID = 2;
+	bytes pubKey = 3;
+	bytes share = 4;
+	bytes signature = 5;
+}
+
+message HRST {
+	int64 height = 1;
+	int64 round = 2;
+  	int32 step = 3;
+  	int64 timestamp = 4;
+}
+
+message CosignerGRPCSetNoncesAndSignRequest {
+	repeated Nonce nonces = 1;
+	HRST hrst = 2;
+	bytes signBytes = 3;
+  	string chainID = 4;
+}
+
+message CosignerGRPCSetNoncesAndSignResponse {
+	bytes noncePublic = 1;
+	int64 timestamp = 2;
+	bytes signature = 3;
+}
+
+message CosignerGRPCGetNoncesRequest {
+	HRST hrst = 1;
+  	string chainID = 2;
+}
+
+message CosignerGRPCGetNoncesResponse {
+	repeated Nonce nonces = 1;
+}

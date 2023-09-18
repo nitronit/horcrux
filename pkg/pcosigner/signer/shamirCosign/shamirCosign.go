@@ -33,8 +33,8 @@ func waitUntilCompleteOrTimeout(wg *sync.WaitGroup, timeout time.Duration) bool 
 }
 
 type ShamirCosign struct {
-	LocalCosign   pcosigner.ILocalCosigner    // The "Cosigner's" LocalCosigner
-	PeerCosigners []pcosigner.IRemoteCosigner // The "Cosigner's" RemoteCosigners
+	LocalCosign   pcosigner.ILocalCosigner    // Server: The "Cosigner's" LocalCosigner
+	PeerCosigners []pcosigner.IRemoteCosigner // Client: The "Cosigner's" RemoteCosigners
 	logger        log.Logger
 	pendingDiskWG sync.WaitGroup
 }

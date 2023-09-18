@@ -526,7 +526,7 @@ func (pv *ThresholdValidator) SignBlock(chainID string, block *Block) ([]byte, t
 		pv.logger.Debug("Returning existing signature", "signature", fmt.Sprintf("%x", existingSignature))
 		return existingSignature, existingTimestamp, nil
 	}
-
+	// TODO Change thresholdalgorithm to scheme.
 	signature, verified, err := pv.thresholdalgorithm.SignAndVerify(
 		chainID, threshold, hrst, pv.grpcTimeout, stamp, timeStartSignBlock, signBytes)
 

@@ -7,7 +7,7 @@ import (
 	"github.com/strangelove-ventures/horcrux/pkg/pcosigner/cipher"
 	"github.com/strangelove-ventures/horcrux/pkg/types"
 
-	"github.com/strangelove-ventures/horcrux/pkg/proto"
+	"github.com/strangelove-ventures/horcrux/pkg/proto/shamir_service/shamirService"
 )
 
 func NewThresholdSignerSoft(config *RuntimeConfig, id int, chainID string) (*cipher.ThresholdSignerSoft, error) {
@@ -84,8 +84,8 @@ type CosignNonce struct {
 	Signature     []byte
 }
 
-func (secretPart *CosignNonce) toProto() *proto.Nonce {
-	return &proto.Nonce{
+func (secretPart *CosignNonce) toProto() *shamirService.Nonce {
+	return &shamirService.Nonce{
 		SourceID:      int32(secretPart.SourceID),
 		DestinationID: int32(secretPart.DestinationID),
 		PubKey:        secretPart.PubKey,
@@ -97,14 +97,14 @@ func (secretPart *CosignNonce) toProto() *proto.Nonce {
 // CosignerNonces is a list of CosignerNonce
 type CosignerNonces []CosignNonce
 
-func (secretParts CosignerNonces) ToProto() (out []*proto.Nonce) {
+func (secretParts CosignerNonces) ToProto() (out []*shamirService.Nonce) {
 	for _, secretPart := range secretParts {
 		out = append(out, secretPart.toProto())
 	}
 	return
 }
 
-func CosignerNonceFromProto(secretPart *proto.Nonce) CosignNonce {
+func CosignerNonceFromProto(secretPart *shamirService.Nonce) CosignNonce {
 	return CosignNonce{
 		SourceID:      int(secretPart.SourceID),
 		DestinationID: int(secretPart.DestinationID),
@@ -114,7 +114,7 @@ func CosignerNonceFromProto(secretPart *proto.Nonce) CosignNonce {
 	}
 }
 
-func CosignerNoncesFromProto(secretParts []*proto.Nonce) []CosignNonce {
+func CosignerNoncesFromProto(secretParts []*shamirService.Nonce) []CosignNonce {
 	out := make([]CosignNonce, len(secretParts))
 	for i, secretPart := range secretParts {
 		out[i] = CosignerNonceFromProto(secretPart)
@@ -138,6 +138,7 @@ type CosignNoncesResponse struct {
 	Nonces []CosignNonce
 }
 
+// TODO: Change name to PostNoncesAndSign
 type CosignerSetNoncesAndSignRequest struct {
 	ChainID   string
 	Nonces    []CosignNonce

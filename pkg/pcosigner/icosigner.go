@@ -19,6 +19,7 @@ type ICosigner interface {
 type IRemoteCosigner interface {
 	ICosigner
 	// Sign the requested bytes
+	// TODO: Change name to PostNoncesAndSign
 	SetNoncesAndSign(req CosignerSetNoncesAndSignRequest) (*CosignerSignResponse, error)
 	// GetNonces requests nonce frpm the peer cosigners
 	GetNonces(chainID string, hrst types.HRSTKey) (*CosignNoncesResponse, error)

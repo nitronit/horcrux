@@ -1,15 +1,20 @@
 package pcosigner
 
-// RemoteCosigner is a Cosigner implementation that uses gRPC make to request to other Cosigners
+// RemoteCosigner implements ICosigner and uses gRPC make to request to other LocalCosigners
+// Another way to think about this is that RemoteCosigner is a client that makes a requests to a remote LocalCosigner which is the server
+// Step by step:
+// 1. Request: Remote --> gRPC --> Local
+// 2. Response: Remote <-- gRPC <-- Local
+// In GRPC: Onthe client side, the client has a stub (referred to as just a client in some languages)
+// 			that provides the same methods(!) as the server.
+
 import (
 	"context"
-	"fmt"
 	"net/url"
 	"time"
 
 	"github.com/strangelove-ventures/horcrux/pkg/types"
 
-	cometcrypto "github.com/cometbft/cometbft/crypto"
 	"github.com/strangelove-ventures/horcrux/pkg/proto"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -21,7 +26,6 @@ import (
 //     "node's" LocalCosigner to set the nonces and sign the payload and respons.
 //   - RemoteCosigner --> gRPC --> LocalCosigner
 //   - RemoteCosigner implements the Cosigner interface
-
 type RemoteCosigner struct {
 	Cosigner
 }
@@ -41,7 +45,7 @@ const (
 	rpcTimeout = 4 * time.Second
 )
 
-func GetContext() (context.Context, context.CancelFunc) {
+func getContext() (context.Context, context.CancelFunc) {
 	return context.WithTimeout(context.Background(), rpcTimeout)
 }
 
@@ -50,6 +54,7 @@ func GetContext() (context.Context, context.CancelFunc) {
 
 // GetPubKey returns public key of the validator.
 // Implements Cosigner interface
+/*
 func (cosigner *RemoteCosigner) GetPubKey(_ string) (cometcrypto.PubKey, error) {
 	return nil, fmt.Errorf("unexpected call to RemoteCosigner.GetPubKey")
 }
@@ -59,7 +64,7 @@ func (cosigner *RemoteCosigner) GetPubKey(_ string) (cometcrypto.PubKey, error) 
 func (cosigner *RemoteCosigner) VerifySignature(_ string, _, _ []byte) bool {
 	return false
 }
-
+*/
 func (cosigner *RemoteCosigner) getGRPCClient() (proto.ICosignerGRPCClient, *grpc.ClientConn, error) {
 	var grpcAddress string
 	url, err := url.Parse(cosigner.address)
@@ -77,6 +82,8 @@ func (cosigner *RemoteCosigner) getGRPCClient() (proto.ICosignerGRPCClient, *grp
 
 // GetNonces implements the Cosigner interface
 // It uses the gRPC client to request the nonces from the other
+// Its the client side (Stub) of the gRPC
+// TODO: Change name to DealNonces or RequestNonces
 func (cosigner *RemoteCosigner) GetNonces(
 	chainID string,
 	req types.HRSTKey,
@@ -87,7 +94,7 @@ func (cosigner *RemoteCosigner) GetNonces(
 		return nil, err
 	}
 	defer conn.Close()
-	context, cancelFunc := GetContext()
+	context, cancelFunc := getContext()
 	defer cancelFunc()
 	res, err := client.GetNonces(
 		context,
@@ -99,13 +106,14 @@ func (cosigner *RemoteCosigner) GetNonces(
 	if err != nil {
 		return nil, err
 	}
+	// Returns one nonce from each cosigner
 	return &CosignNoncesResponse{
 		Nonces: CosignerNoncesFromProto(res.GetNonces()),
 	}, nil
 }
 
 // SetNoncesAndSign implements the Cosigner interface
-// It acts as a client(!) and requests via gRPC the other
+// It acts as a client(!) and requests via gRPC to the server (LocalCosigner) other
 // "node's" LocalCosigner to set the nonces and sign the payload.
 func (cosigner *RemoteCosigner) SetNoncesAndSign(
 	req CosignerSetNoncesAndSignRequest) (*CosignerSignResponse, error) {
@@ -114,8 +122,9 @@ func (cosigner *RemoteCosigner) SetNoncesAndSign(
 		return nil, err
 	}
 	defer conn.Close()
-	context, cancelFunc := GetContext()
+	context, cancelFunc := getContext()
 	defer cancelFunc()
+	// Requests the server to Set the Nonces and Sign the payload
 	res, err := client.SetNoncesAndSign(context,
 		&proto.CosignerGRPCSetNoncesAndSignRequest{
 			ChainID:   req.ChainID,

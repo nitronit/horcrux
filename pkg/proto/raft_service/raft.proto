@@ -1,0 +1,48 @@
+syntax = "proto3";
+
+package raftService;
+option go_package = "github.com/strangelove-ventures/horcrux/pkg/proto/raft_service/raftService";
+/*option go_package = "raftService";*/
+
+// IRaftGRPC handles all the cosigner level "services"
+// All RPCs in ICosignerGRPCServer are Unary. This means the client sends a single request to the
+// server and gets a single response back, just like a normal function call
+
+service IRaftGRPC{
+		rpc SignBlock (RaftGRPCSignBlockRequest) returns (RaftGRPCSignBlockResponse) {}
+		rpc TransferLeadership (RaftGRPCTransferLeadershipRequest) returns (RaftGRPCTransferLeadershipResponse) {}
+		rpc GetLeader (RaftGRPCGetLeaderRequest) returns (RaftGRPCGetLeaderResponse) {}
+}
+
+
+message Block {
+	int64 height = 1;
+	int64 round = 2;
+	int32 step = 3;
+	bytes signBytes = 4;
+	int64 timestamp = 5;
+}
+
+message RaftGRPCSignBlockRequest {
+	string chainID = 1;
+	Block block = 2;
+}
+
+message RaftGRPCSignBlockResponse {
+	bytes signature = 1;
+}
+
+message RaftGRPCTransferLeadershipRequest {
+  	string leaderID = 1;
+}
+
+message RaftGRPCTransferLeadershipResponse {
+  	string leaderID = 1;
+  	string leaderAddress = 2;
+}
+
+message RaftGRPCGetLeaderRequest {}
+
+message RaftGRPCGetLeaderResponse {
+  	string leader = 1;
+}

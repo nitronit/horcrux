@@ -11,12 +11,14 @@ import (
 	"github.com/strangelove-ventures/horcrux/pkg/types"
 
 	"github.com/hashicorp/raft"
-	"github.com/strangelove-ventures/horcrux/pkg/proto"
+
+	"github.com/strangelove-ventures/horcrux/pkg/proto/cosigner_service/shamirService"
+	"github.com/strangelove-ventures/horcrux/pkg/proto/raft_service/raftService"
 )
 
 // Enures that GRPCServer implements the proto.CosignerGRPCServer interface.
-var _ proto.ICosignerGRPCServer = &GRPCServer{}
-var _ proto.IRaftGRPCServer = &GRPCServer{}
+var _ shamirService.ICosignerGRPCServer = &GRPCServer{}
+var _ raftService.IRaftGRPCServer = &GRPCServer{}
 
 // TODO Implement as
 
@@ -24,7 +26,7 @@ type CosignGRPCServer struct {
 	cosigner pcosigner.ILocalCosigner
 
 	logger log.Logger
-	proto.UnimplementedICosignerGRPCServer
+	shamirService.UnimplementedICosignerGRPCServer
 	// Promoted Fields is embedded to have forward compatiblitity
 }
 
@@ -38,7 +40,7 @@ type RaftGRPCServer struct {
 	raftStore *RaftStore
 
 	// Promoted Fields is embedded to have forward compatiblitity
-	proto.UnimplementedIRaftGRPCServer
+	raftService.UnimplementedIRaftGRPCServer
 }
 type GRPCServer struct {
 	*CosignGRPCServer
@@ -61,8 +63,8 @@ func NewGRPCServer(
 // SignBlock "pseudo-implements" the ICosignerGRPCServer interface in pkg/proto/cosigner_grpc_server_grpc.pb.go
 func (rpc *RaftGRPCServer) SignBlock(
 	_ context.Context,
-	req *proto.RaftGRPCSignBlockRequest,
-) (*proto.RaftGRPCSignBlockResponse, error) {
+	req *raftService.RaftGRPCSignBlockRequest,
+) (*raftService.RaftGRPCSignBlockResponse, error) {
 	block := &Block{
 		Height:    req.Block.GetHeight(),
 		Round:     req.Block.GetRound(),
@@ -75,7 +77,7 @@ func (rpc *RaftGRPCServer) SignBlock(
 	if err != nil {
 		return nil, err
 	}
-	return &proto.RaftGRPCSignBlockResponse{
+	return &raftService.RaftGRPCSignBlockResponse{
 		Signature: res,
 	}, nil
 }
@@ -117,6 +119,7 @@ func (rpc *RaftGRPCServer) GetLeader(
 }
 
 // SetNoncesAndSign implements the ICosignerGRPCServer interface.
+// The CosignGRPCServer resonse to the request from the client.
 func (rpc *CosignGRPCServer) SetNoncesAndSign(
 	_ context.Context,
 	req *proto.CosignerGRPCSetNoncesAndSignRequest,

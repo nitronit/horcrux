@@ -1,1 +1,2 @@
-protoc --go_out=. --go_opt=paths=source_relative     --go-grpc_out=. --go-grpc_opt=paths=source_relative     cosigner_grpc_server.proto
+protoc --go_out=. --go_opt=paths=source_relative     --go-grpc_out=. --go-grpc_opt=paths=source_relative     cosigner_service/shamir.proto cosigner_service/shamir.proto 
+protoc --go_out=. --go_opt=paths=source_relative     --go-grpc_out=. --go-grpc_opt=paths=source_relative     cosigner_service/shamir.proto raft_service/raft.proto 
