@@ -28,7 +28,7 @@ import (
 	"github.com/cometbft/cometbft/libs/service"
 	"github.com/hashicorp/raft"
 	boltdb "github.com/hashicorp/raft-boltdb/v2"
-	proto "github.com/strangelove-ventures/horcrux/pkg/proto/cosigner_service/shamirService"
+	shamirService "github.com/strangelove-ventures/horcrux/pkg/proto/cosigner_service"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/reflection"
@@ -111,7 +111,7 @@ func (s *RaftStore) init(localCosigner pcosigner.ILocalCosigner, peers []pcosign
 	grpcServer := grpc.NewServer()
 
 	// proto.RegisterIRaftGRPCServer(grpcServer, s)
-	proto.RegisterICosignerGRPCServer(grpcServer,
+	shamirService.RegisterICosignerGRPCServer(grpcServer,
 		// FIX: this is a TempFIX get cosigner
 		NewGRPCServer(localCosigner, s))
 	transportManager.Register(grpcServer)

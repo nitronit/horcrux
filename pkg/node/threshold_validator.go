@@ -4,14 +4,14 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	raftService "github.com/strangelove-ventures/horcrux/pkg/proto/raft_service"
 	"os"
 	"sync"
 	"time"
 
+	"github.com/strangelove-ventures/horcrux/pkg/pcosigner"
 	"github.com/strangelove-ventures/horcrux/pkg/pcosigner/signer"
 	"github.com/strangelove-ventures/horcrux/pkg/pcosigner/signer/shamircosign"
-
-	"github.com/strangelove-ventures/horcrux/pkg/pcosigner"
 	"github.com/strangelove-ventures/horcrux/pkg/types"
 
 	"github.com/cometbft/cometbft/crypto"
@@ -20,7 +20,6 @@ import (
 	cometrpcjsontypes "github.com/cometbft/cometbft/rpc/jsonrpc/types"
 	comet "github.com/cometbft/cometbft/types"
 	"github.com/strangelove-ventures/horcrux/pkg/metrics"
-	proto "github.com/strangelove-ventures/horcrux/pkg/proto/cosigner_service/shamirService"
 )
 
 // Makes sure  ThresholdValitator implements IPrivValidator, a wrapper around
@@ -307,8 +306,8 @@ func (block Block) HRSTKey() types.HRSTKey {
 	}
 }
 
-func (block Block) toProto() *proto.Block {
-	return &proto.Block{
+func (block Block) toProto() *raftService.Block {
+	return &raftService.Block{
 		Height:    block.Height,
 		Round:     block.Round,
 		Step:      int32(block.Step),

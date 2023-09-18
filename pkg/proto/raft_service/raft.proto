@@ -1,8 +1,8 @@
 syntax = "proto3";
 
-package raftService;
 option go_package = "github.com/strangelove-ventures/horcrux/pkg/proto/raft_service/raftService";
-/*option go_package = "raftService";*/
+
+package raftService;
 
 // IRaftGRPC handles all the cosigner level "services"
 // All RPCs in ICosignerGRPCServer are Unary. This means the client sends a single request to the

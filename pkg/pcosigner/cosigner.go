@@ -7,7 +7,7 @@ import (
 	"github.com/strangelove-ventures/horcrux/pkg/pcosigner/cipher"
 	"github.com/strangelove-ventures/horcrux/pkg/types"
 
-	"github.com/strangelove-ventures/horcrux/pkg/proto/cosigner_service/shamirService"
+	shamirService "github.com/strangelove-ventures/horcrux/pkg/proto/cosigner_service"
 )
 
 func NewThresholdSignerSoft(config *RuntimeConfig, id int, chainID string) (*cipher.ThresholdSignerSoft, error) {

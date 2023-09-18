@@ -10,11 +10,11 @@ import (
 	"time"
 
 	"github.com/cometbft/cometbft/libs/log"
-	
+
 	"github.com/strangelove-ventures/horcrux/pkg/node"
-	"github.com/strangelove-ventures/horcrux/pkg/proto/cosigner_service/shamirService"
-	"github.com/strangelove-ventures/horcrux/pkg/proto/raft_service/raftService"
 	"github.com/strangelove-ventures/horcrux/pkg/pcosigner"
+	shamirService "github.com/strangelove-ventures/horcrux/pkg/proto/cosigner_service"
+	raftService "github.com/strangelove-ventures/horcrux/pkg/proto/raft_service"
 
 	grpcretry "github.com/grpc-ecosystem/go-grpc-middleware/retry"
 	"github.com/strangelove-ventures/horcrux/pkg/multiresolver"

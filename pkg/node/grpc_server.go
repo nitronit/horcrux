@@ -12,8 +12,8 @@ import (
 
 	"github.com/hashicorp/raft"
 
-	"github.com/strangelove-ventures/horcrux/pkg/proto/cosigner_service/shamirService"
-	"github.com/strangelove-ventures/horcrux/pkg/proto/raft_service/raftService"
+	shamirService "github.com/strangelove-ventures/horcrux/pkg/proto/cosigner_service"
+	raftService "github.com/strangelove-ventures/horcrux/pkg/proto/raft_service"
 )
 
 // Enures that GRPCServer implements the proto.CosignerGRPCServer interface.
@@ -85,10 +85,10 @@ func (rpc *RaftGRPCServer) SignBlock(
 // TransferLeadership pseudo-implements the ICosignerGRPCServer interface in pkg/proto/cosigner_grpc_server_grpc.pb.go
 func (rpc *RaftGRPCServer) TransferLeadership(
 	_ context.Context,
-	req *proto.RaftGRPCTransferLeadershipRequest,
-) (*proto.RaftGRPCTransferLeadershipResponse, error) {
+	req *raftService.RaftGRPCTransferLeadershipRequest,
+) (*raftService.RaftGRPCTransferLeadershipResponse, error) {
 	if rpc.raftStore.raft.State() != raft.Leader {
-		return &proto.RaftGRPCTransferLeadershipResponse{}, nil
+		return &raftService.RaftGRPCTransferLeadershipResponse{}, nil
 	}
 	leaderID := req.GetLeaderID()
 	if leaderID != "" {
@@ -99,31 +99,31 @@ func (rpc *RaftGRPCServer) TransferLeadership(
 				raftAddress := p2pURLToRaftAddress(c.GetAddress())
 				fmt.Printf("Transferring leadership to ID: %s - Address: %s\n", shardID, raftAddress)
 				rpc.raftStore.raft.LeadershipTransferToServer(raft.ServerID(shardID), raft.ServerAddress(raftAddress))
-				return &proto.RaftGRPCTransferLeadershipResponse{LeaderID: shardID, LeaderAddress: raftAddress}, nil
+				return &raftService.RaftGRPCTransferLeadershipResponse{LeaderID: shardID, LeaderAddress: raftAddress}, nil
 			}
 		}
 	}
 	fmt.Printf("Transferring leadership to next candidate\n")
 	rpc.raftStore.raft.LeadershipTransfer()
-	return &proto.RaftGRPCTransferLeadershipResponse{}, nil
+	return &raftService.RaftGRPCTransferLeadershipResponse{}, nil
 }
 
 // GetLeader pseudo-implements the ICosignerGRPCServer interface in pkg/proto/cosigner_grpc_server_grpc.pb.go
 // GetLeader gets the current raft cluster leader and send it as respons.
 func (rpc *RaftGRPCServer) GetLeader(
 	context.Context,
-	*proto.RaftGRPCGetLeaderRequest,
-) (*proto.RaftGRPCGetLeaderResponse, error) {
+	*raftService.RaftGRPCGetLeaderRequest,
+) (*raftService.RaftGRPCGetLeaderResponse, error) {
 	leader := rpc.raftStore.GetLeader()
-	return &proto.RaftGRPCGetLeaderResponse{Leader: string(leader)}, nil
+	return &raftService.RaftGRPCGetLeaderResponse{Leader: string(leader)}, nil
 }
 
 // SetNoncesAndSign implements the ICosignerGRPCServer interface.
 // The CosignGRPCServer resonse to the request from the client.
 func (rpc *CosignGRPCServer) SetNoncesAndSign(
 	_ context.Context,
-	req *proto.CosignerGRPCSetNoncesAndSignRequest,
-) (*proto.CosignerGRPCSetNoncesAndSignResponse, error) {
+	req *shamirService.CosignerGRPCSetNoncesAndSignRequest,
+) (*shamirService.CosignerGRPCSetNoncesAndSignResponse, error) {
 	res, err := rpc.cosigner.SetNoncesAndSign(
 		pcosigner.CosignerSetNoncesAndSignRequest{
 			ChainID:   req.ChainID,
@@ -149,7 +149,7 @@ func (rpc *CosignGRPCServer) SetNoncesAndSign(
 		"round", req.Hrst.Round,
 		"step", req.Hrst.Step,
 	)
-	return &proto.CosignerGRPCSetNoncesAndSignResponse{
+	return &shamirService.CosignerGRPCSetNoncesAndSignResponse{
 		NoncePublic: res.NoncePublic,
 		Timestamp:   res.Timestamp.UnixNano(),
 		Signature:   res.Signature,
@@ -159,8 +159,8 @@ func (rpc *CosignGRPCServer) SetNoncesAndSign(
 // GetNonces implements the ICosignerGRPCServer interface.
 func (rpc *CosignGRPCServer) GetNonces(
 	_ context.Context,
-	req *proto.CosignerGRPCGetNoncesRequest,
-) (*proto.CosignerGRPCGetNoncesResponse, error) {
+	req *shamirService.CosignerGRPCGetNoncesRequest,
+) (*shamirService.CosignerGRPCGetNoncesResponse, error) {
 	res, err := rpc.cosigner.GetNonces(
 		req.ChainID,
 		types.HRSTKeyFromProto(req.GetHrst()),
@@ -168,7 +168,7 @@ func (rpc *CosignGRPCServer) GetNonces(
 	if err != nil {
 		return nil, err
 	}
-	return &proto.CosignerGRPCGetNoncesResponse{
+	return &shamirService.CosignerGRPCGetNoncesResponse{
 		Nonces: pcosigner.CosignerNonces(res.Nonces).ToProto(),
 	}, nil
 }

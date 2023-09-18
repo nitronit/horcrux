@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/strangelove-ventures/horcrux/pkg/metrics"
-	"github.com/strangelove-ventures/horcrux/pkg/proto/raft_service/raftService"
+	raftService "github.com/strangelove-ventures/horcrux/pkg/proto/raft_service"
 	"github.com/strangelove-ventures/horcrux/pkg/types"
 
 	"google.golang.org/grpc"

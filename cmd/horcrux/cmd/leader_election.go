@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/strangelove-ventures/horcrux/pkg/pcosigner"
-	"github.com/strangelove-ventures/horcrux/pkg/proto/raft_service/raftService"
+	raftService "github.com/strangelove-ventures/horcrux/pkg/proto/raft_service"
 
 	grpcretry "github.com/grpc-ecosystem/go-grpc-middleware/retry"
 	"github.com/spf13/cobra"
