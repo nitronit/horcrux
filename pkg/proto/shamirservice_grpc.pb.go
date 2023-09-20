@@ -2,9 +2,9 @@
 // versions:
 // - protoc-gen-go-grpc v1.2.0
 // - protoc             v3.13.0
-// source: cosigner_service/shamir.proto
+// source: shamirservice.proto
 
-package shamirService
+package proto
 
 import (
 	context "context"
@@ -36,7 +36,7 @@ func NewICosignerGRPCClient(cc grpc.ClientConnInterface) ICosignerGRPCClient {
 
 func (c *iCosignerGRPCClient) SetNoncesAndSign(ctx context.Context, in *CosignerGRPCSetNoncesAndSignRequest, opts ...grpc.CallOption) (*CosignerGRPCSetNoncesAndSignResponse, error) {
 	out := new(CosignerGRPCSetNoncesAndSignResponse)
-	err := c.cc.Invoke(ctx, "/shamirService.ICosignerGRPC/SetNoncesAndSign", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/proto.ICosignerGRPC/SetNoncesAndSign", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -45,7 +45,7 @@ func (c *iCosignerGRPCClient) SetNoncesAndSign(ctx context.Context, in *Cosigner
 
 func (c *iCosignerGRPCClient) GetNonces(ctx context.Context, in *CosignerGRPCGetNoncesRequest, opts ...grpc.CallOption) (*CosignerGRPCGetNoncesResponse, error) {
 	out := new(CosignerGRPCGetNoncesResponse)
-	err := c.cc.Invoke(ctx, "/shamirService.ICosignerGRPC/GetNonces", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/proto.ICosignerGRPC/GetNonces", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -94,7 +94,7 @@ func _ICosignerGRPC_SetNoncesAndSign_Handler(srv interface{}, ctx context.Contex
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/shamirService.ICosignerGRPC/SetNoncesAndSign",
+		FullMethod: "/proto.ICosignerGRPC/SetNoncesAndSign",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(ICosignerGRPCServer).SetNoncesAndSign(ctx, req.(*CosignerGRPCSetNoncesAndSignRequest))
@@ -112,7 +112,7 @@ func _ICosignerGRPC_GetNonces_Handler(srv interface{}, ctx context.Context, dec 
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/shamirService.ICosignerGRPC/GetNonces",
+		FullMethod: "/proto.ICosignerGRPC/GetNonces",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(ICosignerGRPCServer).GetNonces(ctx, req.(*CosignerGRPCGetNoncesRequest))
@@ -124,7 +124,7 @@ func _ICosignerGRPC_GetNonces_Handler(srv interface{}, ctx context.Context, dec 
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var ICosignerGRPC_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "shamirService.ICosignerGRPC",
+	ServiceName: "proto.ICosignerGRPC",
 	HandlerType: (*ICosignerGRPCServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -137,5 +137,5 @@ var ICosignerGRPC_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "cosigner_service/shamir.proto",
+	Metadata: "shamirservice.proto",
 }

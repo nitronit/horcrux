@@ -4,10 +4,11 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	raftService "github.com/strangelove-ventures/horcrux/pkg/proto/raft_service"
 	"os"
 	"sync"
 	"time"
+
+	"github.com/strangelove-ventures/horcrux/pkg/proto"
 
 	"github.com/strangelove-ventures/horcrux/pkg/pcosigner"
 	"github.com/strangelove-ventures/horcrux/pkg/pcosigner/signer"
@@ -306,8 +307,8 @@ func (block Block) HRSTKey() types.HRSTKey {
 	}
 }
 
-func (block Block) toProto() *raftService.Block {
-	return &raftService.Block{
+func (block Block) toProto() *proto.Block {
+	return &proto.Block{
 		Height:    block.Height,
 		Round:     block.Round,
 		Step:      int32(block.Step),

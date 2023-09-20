@@ -2,9 +2,9 @@
 // versions:
 // - protoc-gen-go-grpc v1.2.0
 // - protoc             v3.13.0
-// source: raft_service/raft.proto
+// source: raftservice.proto
 
-package raftService
+package proto
 
 import (
 	context "context"
@@ -37,7 +37,7 @@ func NewIRaftGRPCClient(cc grpc.ClientConnInterface) IRaftGRPCClient {
 
 func (c *iRaftGRPCClient) SignBlock(ctx context.Context, in *RaftGRPCSignBlockRequest, opts ...grpc.CallOption) (*RaftGRPCSignBlockResponse, error) {
 	out := new(RaftGRPCSignBlockResponse)
-	err := c.cc.Invoke(ctx, "/raftService.IRaftGRPC/SignBlock", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/proto.IRaftGRPC/SignBlock", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -46,7 +46,7 @@ func (c *iRaftGRPCClient) SignBlock(ctx context.Context, in *RaftGRPCSignBlockRe
 
 func (c *iRaftGRPCClient) TransferLeadership(ctx context.Context, in *RaftGRPCTransferLeadershipRequest, opts ...grpc.CallOption) (*RaftGRPCTransferLeadershipResponse, error) {
 	out := new(RaftGRPCTransferLeadershipResponse)
-	err := c.cc.Invoke(ctx, "/raftService.IRaftGRPC/TransferLeadership", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/proto.IRaftGRPC/TransferLeadership", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -55,7 +55,7 @@ func (c *iRaftGRPCClient) TransferLeadership(ctx context.Context, in *RaftGRPCTr
 
 func (c *iRaftGRPCClient) GetLeader(ctx context.Context, in *RaftGRPCGetLeaderRequest, opts ...grpc.CallOption) (*RaftGRPCGetLeaderResponse, error) {
 	out := new(RaftGRPCGetLeaderResponse)
-	err := c.cc.Invoke(ctx, "/raftService.IRaftGRPC/GetLeader", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/proto.IRaftGRPC/GetLeader", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -108,7 +108,7 @@ func _IRaftGRPC_SignBlock_Handler(srv interface{}, ctx context.Context, dec func
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/raftService.IRaftGRPC/SignBlock",
+		FullMethod: "/proto.IRaftGRPC/SignBlock",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(IRaftGRPCServer).SignBlock(ctx, req.(*RaftGRPCSignBlockRequest))
@@ -126,7 +126,7 @@ func _IRaftGRPC_TransferLeadership_Handler(srv interface{}, ctx context.Context,
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/raftService.IRaftGRPC/TransferLeadership",
+		FullMethod: "/proto.IRaftGRPC/TransferLeadership",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(IRaftGRPCServer).TransferLeadership(ctx, req.(*RaftGRPCTransferLeadershipRequest))
@@ -144,7 +144,7 @@ func _IRaftGRPC_GetLeader_Handler(srv interface{}, ctx context.Context, dec func
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/raftService.IRaftGRPC/GetLeader",
+		FullMethod: "/proto.IRaftGRPC/GetLeader",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(IRaftGRPCServer).GetLeader(ctx, req.(*RaftGRPCGetLeaderRequest))
@@ -156,7 +156,7 @@ func _IRaftGRPC_GetLeader_Handler(srv interface{}, ctx context.Context, dec func
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var IRaftGRPC_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "raftService.IRaftGRPC",
+	ServiceName: "proto.IRaftGRPC",
 	HandlerType: (*IRaftGRPCServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -173,5 +173,5 @@ var IRaftGRPC_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "raft_service/raft.proto",
+	Metadata: "raftservice.proto",
 }

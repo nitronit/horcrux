@@ -15,7 +15,7 @@ import (
 
 	"github.com/strangelove-ventures/horcrux/pkg/types"
 
-	shamirService "github.com/strangelove-ventures/horcrux/pkg/proto/cosigner_service"
+	"github.com/strangelove-ventures/horcrux/pkg/proto"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
@@ -65,7 +65,7 @@ func (cosigner *RemoteCosigner) VerifySignature(_ string, _, _ []byte) bool {
 	return false
 }
 */
-func (cosigner *RemoteCosigner) getGRPCClient() (shamirService.ICosignerGRPCClient, *grpc.ClientConn, error) {
+func (cosigner *RemoteCosigner) getGRPCClient() (proto.ICosignerGRPCClient, *grpc.ClientConn, error) {
 	var grpcAddress string
 	url, err := url.Parse(cosigner.address)
 	if err != nil {
@@ -77,7 +77,7 @@ func (cosigner *RemoteCosigner) getGRPCClient() (shamirService.ICosignerGRPCClie
 	if err != nil {
 		return nil, nil, err
 	}
-	return shamirService.NewICosignerGRPCClient(conn), conn, nil
+	return proto.NewICosignerGRPCClient(conn), conn, nil
 }
 
 // GetNonces implements the Cosigner interface
@@ -98,7 +98,7 @@ func (cosigner *RemoteCosigner) GetNonces(
 	defer cancelFunc()
 	res, err := client.GetNonces(
 		context,
-		&shamirService.CosignerGRPCGetNoncesRequest{
+		&proto.CosignerGRPCGetNoncesRequest{
 			ChainID: chainID,
 			Hrst:    req.ToProto(),
 		},
@@ -126,7 +126,7 @@ func (cosigner *RemoteCosigner) SetNoncesAndSign(
 	defer cancelFunc()
 	// Requests the server to Set the Nonces and Sign the payload
 	res, err := client.SetNoncesAndSign(context,
-		&shamirService.CosignerGRPCSetNoncesAndSignRequest{
+		&proto.CosignerGRPCSetNoncesAndSignRequest{
 			ChainID:   req.ChainID,
 			Nonces:    CosignerNonces(req.Nonces).ToProto(),
 			Hrst:      req.HRST.ToProto(),

@@ -1,7 +1,7 @@
 package types
 
 import (
-	shamirService "github.com/strangelove-ventures/horcrux/pkg/proto/cosigner_service"
+	"github.com/strangelove-ventures/horcrux/pkg/proto"
 )
 
 // HRSKey represents the key for the HRS metadata map.
@@ -52,7 +52,7 @@ func (hrst HRSTKey) HRSKey() HRSKey {
 }
 
 // HRSTKeyFromProto returns a HRSTKey from a proto.HRST.
-func HRSTKeyFromProto(hrs *shamirService.HRST) HRSTKey {
+func HRSTKeyFromProto(hrs *proto.HRST) HRSTKey {
 	return HRSTKey{
 		Height:    hrs.GetHeight(),
 		Round:     hrs.GetRound(),
@@ -61,8 +61,8 @@ func HRSTKeyFromProto(hrs *shamirService.HRST) HRSTKey {
 	}
 }
 
-func (hrst HRSTKey) ToProto() *shamirService.HRST {
-	return &shamirService.HRST{
+func (hrst HRSTKey) ToProto() *proto.HRST {
+	return &proto.HRST{
 		Height:    hrst.Height,
 		Round:     hrst.Round,
 		Step:      int32(hrst.Step),

@@ -7,7 +7,7 @@ import (
 	"github.com/strangelove-ventures/horcrux/pkg/pcosigner/cipher"
 	"github.com/strangelove-ventures/horcrux/pkg/types"
 
-	shamirService "github.com/strangelove-ventures/horcrux/pkg/proto/cosigner_service"
+	"github.com/strangelove-ventures/horcrux/pkg/proto"
 )
 
 func NewThresholdSignerSoft(config *RuntimeConfig, id int, chainID string) (*cipher.ThresholdSignerSoft, error) {
@@ -84,8 +84,8 @@ type CosignNonce struct {
 	Signature     []byte
 }
 
-func (secretPart *CosignNonce) toProto() *shamirService.Nonce {
-	return &shamirService.Nonce{
+func (secretPart *CosignNonce) toProto() *proto.Nonce {
+	return &proto.Nonce{
 		SourceID:      int32(secretPart.SourceID),
 		DestinationID: int32(secretPart.DestinationID),
 		PubKey:        secretPart.PubKey,
@@ -97,14 +97,14 @@ func (secretPart *CosignNonce) toProto() *shamirService.Nonce {
 // CosignerNonces is a list of CosignerNonce
 type CosignerNonces []CosignNonce
 
-func (secretParts CosignerNonces) ToProto() (out []*shamirService.Nonce) {
+func (secretParts CosignerNonces) ToProto() (out []*proto.Nonce) {
 	for _, secretPart := range secretParts {
 		out = append(out, secretPart.toProto())
 	}
 	return
 }
 
-func CosignerNonceFromProto(secretPart *shamirService.Nonce) CosignNonce {
+func CosignerNonceFromProto(secretPart *proto.Nonce) CosignNonce {
 	return CosignNonce{
 		SourceID:      int(secretPart.SourceID),
 		DestinationID: int(secretPart.DestinationID),
@@ -114,7 +114,7 @@ func CosignerNonceFromProto(secretPart *shamirService.Nonce) CosignNonce {
 	}
 }
 
-func CosignerNoncesFromProto(secretParts []*shamirService.Nonce) []CosignNonce {
+func CosignerNoncesFromProto(secretParts []*proto.Nonce) []CosignNonce {
 	out := make([]CosignNonce, len(secretParts))
 	for i, secretPart := range secretParts {
 		out[i] = CosignerNonceFromProto(secretPart)

@@ -2,6 +2,7 @@ package node_test
 
 import (
 	"crypto/rand"
+	"fmt"
 	"os"
 	"testing"
 	"time"
@@ -49,8 +50,8 @@ func Test_StoreInMemOpenSingleNode(t *testing.T) {
 	remoteCosigns := make([]pcosigner.IRemoteCosigner, 0)
 	remoteCosigns = append(remoteCosigns, pcosigner.NewRemoteCosigner(1, "temp"))
 	shadowRemoteCosign := pcosigner.FromIRemoteToICosigner(remoteCosigns)
-	//spew.Dump(&remoteCosigns)
-	//spew.Dump(&shadowRemoteCosign)
+	// spew.Dump(&remoteCosigns)
+	// spew.Dump(&shadowRemoteCosign)
 
 	//fmt.Printf("remotecosign: %s \n", spew.Dump(&remoteCosigns))
 	//fmt.Printf("shadowRemoteCosign: %v \n", spew.Dump(&shadowRemoteCosign))
@@ -60,13 +61,14 @@ func Test_StoreInMemOpenSingleNode(t *testing.T) {
 	validator := node.NewThresholdValidator(log.NewNopLogger(), nil, 0, 1, 1, cosigner, remoteCosigns, s)
 
 	s.SetThresholdValidator(validator)
-
 	if _, err := s.Open(shadowRemoteCosign); err != nil {
 		t.Fatalf("failed to open store: %s", err)
 	}
 
+	fmt.Printf("Leader: %s \n", s.GetLeader())
 	// Simple way to ensure there is a leader.
-	time.Sleep(3 * time.Second)
+	time.Sleep(10 * time.Second)
+	fmt.Printf("Leader: %s \n", s.GetLeader())
 
 	if err := s.Set("foo", "bar"); err != nil {
 		t.Fatalf("failed to set key: %s", err.Error())

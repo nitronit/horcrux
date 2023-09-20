@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/strangelove-ventures/horcrux/pkg/metrics"
-	raftService "github.com/strangelove-ventures/horcrux/pkg/proto/raft_service"
+	"github.com/strangelove-ventures/horcrux/pkg/proto"
 	"github.com/strangelove-ventures/horcrux/pkg/types"
 
 	"google.golang.org/grpc"
@@ -67,7 +67,7 @@ func (f *fsm) handleLSSEvent(value string) {
 	}
 }
 
-func (s *RaftStore) getLeaderGRPCClient() (raftService.IRaftGRPCClient, *grpc.ClientConn, error) {
+func (s *RaftStore) getLeaderGRPCClient() (proto.IRaftGRPCClient, *grpc.ClientConn, error) {
 	var leader string
 	for i := 0; i < 30; i++ {
 		leader = string(s.GetLeader())
@@ -85,7 +85,7 @@ func (s *RaftStore) getLeaderGRPCClient() (raftService.IRaftGRPCClient, *grpc.Cl
 		return nil, nil, err
 	}
 
-	return raftService.NewIRaftGRPCClient(conn), conn, nil
+	return proto.NewIRaftGRPCClient(conn), conn, nil
 }
 
 // SignBlock implements the ILeader interface
@@ -97,7 +97,7 @@ func (s *RaftStore) SignBlock(req ValidatorSignBlockRequest) (*ValidatorSignBloc
 	defer conn.Close()
 	context, cancelFunc := GetContext()
 	defer cancelFunc()
-	res, err := client.SignBlock(context, &raftService.RaftGRPCSignBlockRequest{
+	res, err := client.SignBlock(context, &proto.RaftGRPCSignBlockRequest{
 		ChainID: req.ChainID,
 		Block:   req.Block.toProto(),
 	})
