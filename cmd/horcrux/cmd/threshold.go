@@ -26,7 +26,7 @@ func NewThresholdValidator(
 	thresholdCfg := config.Config.ThresholdModeConfig
 	// NOTE: Shouldnt this be a list of concrete type instead of interface type?
 	remoteCosigners := make([]pcosigner.IRemoteCosigner, 0, len(thresholdCfg.Cosigners)-1)
-	remoteIcosigners := make([]pcosigner.ICosigner, 0, len(thresholdCfg.Cosigners)-1)
+	// peers := make([]pcosigner.ICosigner, 0, len(thresholdCfg.Cosigners)-1)
 
 	var p2pListen string
 	var cosign pcosigner.Cosigner
@@ -43,21 +43,20 @@ func NewThresholdValidator(
 
 	for _, c := range thresholdCfg.Cosigners {
 		if c.ShardID != security.GetID() {
-			temp := pcosigner.NewRemoteCosigner(c.ShardID, c.P2PAddr)
-			remoteCosigners = append(
-				remoteCosigners,
-				temp,
-			)
-			remoteIcosigners = append(
-				remoteIcosigners,
-				temp)
+
+			// remoteCosigners = append(
+			//	remoteCosigners,
+			//	temp,
+			// )
+			remoteCosigners = append(remoteCosigners, pcosigner.NewRemoteCosigner(security.GetID(), c.P2PAddr))
 		} else {
+			// p2pListen = c.P2PAddr
 			cosign = pcosigner.NewCosign(c.ShardID, c.P2PAddr)
 
 		}
 	}
 
-	if p2pListen == "" {
+	if cosign.GetAddress() == "" {
 		return nil, nil, fmt.Errorf("cosigner config does not exist for our shard ID %d", security.GetID())
 	}
 
@@ -81,7 +80,7 @@ func NewThresholdValidator(
 	nodeID := fmt.Sprint(security.GetID())
 
 	raftStore := node.NewRaftStore(nodeID,
-		raftDir, p2pListen, raftTimeout, logger, localCosigner, remoteIcosigners)
+		raftDir, p2pListen, raftTimeout, logger)
 	if err := raftStore.Start(); err != nil {
 		return nil, nil, fmt.Errorf("error starting raft store: %w", err)
 	}
@@ -94,8 +93,8 @@ func NewThresholdValidator(
 		grpcTimeout,
 		maxWaitForSameBlockAttempts,
 		localCosigner,
-		remoteCosigners,
-		raftStore, // raftStore implements the ILeader interface
+		remoteCosigners, // remote Cosigners are the peers we are calling remotely
+		raftStore,       // raftStore implements the ILeader interface
 	)
 
 	raftStore.SetThresholdValidator(val)

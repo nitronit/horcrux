@@ -18,7 +18,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/strangelove-ventures/horcrux/pkg/pcosigner"
 	"github.com/strangelove-ventures/horcrux/pkg/proto"
 	"github.com/strangelove-ventures/horcrux/pkg/types"
 
@@ -69,7 +68,7 @@ type RaftStore struct {
 // NewRaftStore returns a new RaftStore.
 func NewRaftStore(
 	nodeID string, directory string, bindAddress string, timeout time.Duration,
-	logger log.Logger, localCosigner pcosigner.ILocalCosigner, peers []pcosigner.ICosigner) *RaftStore {
+	logger log.Logger) /*, localCosigner pcosigner.ILocalCosigner, peers []pcosigner.ICosigner) */ *RaftStore {
 	cosignerRaftStore := &RaftStore{
 		NodeID:      nodeID,
 		RaftDir:     directory,
@@ -79,11 +78,11 @@ func NewRaftStore(
 		logger:      logger,
 	}
 
-	err := cosignerRaftStore.onStart(localCosigner, peers)
-	if err != nil {
-		fmt.Printf("cosignerRaftStore.onStart: %v", err)
-		panic(err)
-	}
+	// err := cosignerRaftStore.OnStart()
+	// if err != nil {
+	// 	fmt.Printf("cosignerRaftStore.onStart: %v", err)
+	// 	panic(err)
+	// }
 	cosignerRaftStore.BaseService = *service.NewBaseService(logger, "CosignerRaftStore", cosignerRaftStore)
 	return cosignerRaftStore
 }
@@ -92,7 +91,7 @@ func (s *RaftStore) SetThresholdValidator(thresholdValidator *ThresholdValidator
 	s.thresholdValidator = thresholdValidator
 }
 
-func (s *RaftStore) init(localCosigner pcosigner.ILocalCosigner, peers []pcosigner.ICosigner) error {
+func (s *RaftStore) init() error {
 	host := p2pURLToRaftAddress(s.RaftBind)
 	_, port, err := net.SplitHostPort(host)
 	if err != nil {
@@ -103,7 +102,7 @@ func (s *RaftStore) init(localCosigner pcosigner.ILocalCosigner, peers []pcosign
 	if err != nil {
 		return err
 	}
-	transportManager, err := s.Open(peers)
+	transportManager, err := s.Open()
 	if err != nil {
 		fmt.Printf("s.Open: %v", err)
 		return err
@@ -111,10 +110,9 @@ func (s *RaftStore) init(localCosigner pcosigner.ILocalCosigner, peers []pcosign
 	// Create a new gRPC server which is used by both the Raft, the threshold validator and the cosigner
 	grpcServer := grpc.NewServer()
 
-	// proto.RegisterIRaftGRPCServer(grpcServer, s)
-	proto.RegisterICosignerGRPCServer(grpcServer,
-		// FIX: this is a TempFIX get cosigner
-		NewGRPCServer(localCosigner, s))
+	server := NewGRPCServer(s)
+	proto.RegisterIRaftGRPCServer(grpcServer, server.RaftGRPCServer)
+	proto.RegisterICosignerGRPCServer(grpcServer, server.CosignGRPCServer)
 	transportManager.Register(grpcServer)
 	leaderhealth.Setup(s.raft, grpcServer, []string{"Leader"})
 	raftadmin.Register(grpcServer, s.raft)
@@ -124,18 +122,12 @@ func (s *RaftStore) init(localCosigner pcosigner.ILocalCosigner, peers []pcosign
 
 // OnStart starts the raft server
 func (s *RaftStore) OnStart() error {
-	s.logger.Info("Starting RaftStore")
-	return nil
-}
-func (s *RaftStore) onStart(localCosign pcosigner.ILocalCosigner, peers []pcosigner.ICosigner) error {
 	go func() {
-		err := s.init(localCosign, peers)
+		err := s.init()
 		if err != nil {
-			s.logger.Error("Starting RaftStore", "error", err)
 			panic(err)
 		}
 	}()
-
 	return nil
 }
 
@@ -150,11 +142,12 @@ func p2pURLToRaftAddress(p2pURL string) string {
 // Open opens the store. If enableSingle is set, and there are no existing peers,
 // then this node becomes the first node, and therefore leader, of the cluster.
 // localID should be the server identifier for this node.
-func (s *RaftStore) Open(peers []pcosigner.ICosigner) (*raftgrpctransport.Manager, error) {
+func (s *RaftStore) Open() (*raftgrpctransport.Manager, error) {
 	// Setup Raft configuration.
 	config := raft.DefaultConfig()
 	config.LocalID = raft.ServerID(s.NodeID)
-	config.LogLevel = "ERROR"
+	//fmt.Printf("Node ID %s\n", s.NodeID)
+	config.LogLevel = "DEBUG"
 
 	// Create the snapshot store. This allows the Raft to truncate the log.
 	snapshots, err := raft.NewFileSnapshotStore(s.RaftDir, retainSnapshotCount, os.Stderr)
@@ -176,6 +169,8 @@ func (s *RaftStore) Open(peers []pcosigner.ICosigner) (*raftgrpctransport.Manage
 	}
 
 	raftAddress := raft.ServerAddress(p2pURLToRaftAddress(s.RaftBind))
+	fmt.Printf("Node Bind %s\n", s.RaftBind)
+	fmt.Printf("raftaddress %s\n", raftAddress)
 
 	// Setup Raft communication.
 	transportManager := raftgrpctransport.New(raftAddress, []grpc.DialOption{
@@ -198,15 +193,17 @@ func (s *RaftStore) Open(peers []pcosigner.ICosigner) (*raftgrpctransport.Manage
 		},
 	}
 	// This is also a not so nice fix.
-	for _, c := range peers {
-		configuration.Servers = append(configuration.Servers,
-			raft.Server{
-				ID:      raft.ServerID(fmt.Sprint(c.GetID())),
-				Address: raft.ServerAddress(p2pURLToRaftAddress(c.GetAddress())),
-			})
+	for _, c := range s.thresholdValidator.thresholdalgorithm.GetPeers() {
+		fmt.Printf("Adding peer to raft cluster \n\tid: %v, \n\taddress: %s\n", c.GetID(), c.GetAddress())
+		configuration.Servers = append(configuration.Servers, raft.Server{
+			ID:      raft.ServerID(fmt.Sprint(c.GetID())),
+			Address: raft.ServerAddress(p2pURLToRaftAddress(c.GetAddress())),
+		})
 	}
+	fmt.Printf("Configuration: %v\n", configuration)
 	s.raft.BootstrapCluster(configuration)
 
+	// fmt.Printf("Leader: %s \n", s.GetLeader())
 	return transportManager, nil
 }
 
@@ -308,9 +305,12 @@ func (s *RaftStore) IsLeader() bool {
 
 func (s *RaftStore) GetLeader() raft.ServerAddress {
 	if s == nil || s.raft == nil {
+		fmt.Printf("s is nil %v, or s.raft is nil %v", s, s.raft)
 		return ""
 	}
-	return s.raft.Leader()
+	add, id := s.raft.LeaderWithID()
+	fmt.Printf("\naddress is: \n\t%s\nid is:\n\t%s\n", add, id)
+	return add
 }
 
 func (s *RaftStore) ShareSigned(lss types.ChainSignStateConsensus) error {

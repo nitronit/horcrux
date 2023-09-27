@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/cometbft/cometbft/crypto"
+	"github.com/strangelove-ventures/horcrux/pkg/pcosigner"
 	"github.com/strangelove-ventures/horcrux/pkg/types"
 )
 
@@ -22,6 +23,8 @@ type ISigner interface {
 	// SaveLastSignedState saves the last sign state in the "high watermark" file at the cosigner lever.
 	SaveLastSignedState(chainID string, signStateConsensus types.SignStateConsensus) error
 
+	GetLocalCosign() pcosigner.ILocalCosigner
+	GetPeers() []pcosigner.IRemoteCosigner
 	// TODO: Potentially add generate?
 	/*
 

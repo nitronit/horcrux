@@ -48,6 +48,10 @@ func NewShamirCosign(
 	}
 }
 
+func (s *ShamirCosign) GetID() *pcosigner.ILocalCosigner {
+	return &s.LocalCosign
+}
+
 // waitForSignStatesToFlushToDisk waits for any sign states to finish writing to disk.
 func (s *ShamirCosign) WaitForSignStatesToFlushToDisk() {
 	s.pendingDiskWG.Wait()

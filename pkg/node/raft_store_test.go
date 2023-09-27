@@ -44,31 +44,33 @@ func Test_StoreInMemOpenSingleNode(t *testing.T) {
 				ECIESKey:  eciesKey,
 				ECIESPubs: []*ecies.PublicKey{&eciesKey.PublicKey},
 			}),
-		pcosigner.NewCosign(key.ID, ""),
+		pcosigner.NewCosign(0, "127.0.0.1:0"),
 	)
 
 	remoteCosigns := make([]pcosigner.IRemoteCosigner, 0)
-	remoteCosigns = append(remoteCosigns, pcosigner.NewRemoteCosigner(1, "temp"))
-	shadowRemoteCosign := pcosigner.FromIRemoteToICosigner(remoteCosigns)
+	//remoteCosigns = append(remoteCosigns, cosigner)
+	//remoteCosigns = append(remoteCosigns, pcosigner.NewRemoteCosigner(2, "temp"))
+
+	//shadowRemoteCosign := pcosigner.FromIRemoteToICosigner(remoteCosigns)
 	// spew.Dump(&remoteCosigns)
 	// spew.Dump(&shadowRemoteCosign)
 
 	//fmt.Printf("remotecosign: %s \n", spew.Dump(&remoteCosigns))
 	//fmt.Printf("shadowRemoteCosign: %v \n", spew.Dump(&shadowRemoteCosign))
 
-	s := node.NewRaftStore("1", tmpDir, "127.0.0.1:0", 1*time.Second, log.NewNopLogger(), cosigner, shadowRemoteCosign)
+	s := node.NewRaftStore("1", tmpDir, "127.0.0.1:0", 1*time.Second, log.NewNopLogger())
 
-	validator := node.NewThresholdValidator(log.NewNopLogger(), nil, 0, 1, 1, cosigner, remoteCosigns, s)
-
+	validator := node.NewThresholdValidator(log.NewNopLogger(), &pcosigner.RuntimeConfig{}, 0, 1*time.Second, 1, cosigner, remoteCosigns, s)
 	s.SetThresholdValidator(validator)
-	if _, err := s.Open(shadowRemoteCosign); err != nil {
+
+	if _, err := s.Open(); err != nil {
 		t.Fatalf("failed to open store: %s", err)
 	}
 
 	fmt.Printf("Leader: %s \n", s.GetLeader())
+
 	// Simple way to ensure there is a leader.
-	time.Sleep(10 * time.Second)
-	fmt.Printf("Leader: %s \n", s.GetLeader())
+	time.Sleep(3 * time.Second)
 
 	if err := s.Set("foo", "bar"); err != nil {
 		t.Fatalf("failed to set key: %s", err.Error())

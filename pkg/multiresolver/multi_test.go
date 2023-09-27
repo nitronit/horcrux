@@ -14,7 +14,6 @@ import (
 	"github.com/strangelove-ventures/horcrux/pkg/node"
 	"github.com/strangelove-ventures/horcrux/pkg/pcosigner"
 	proto "github.com/strangelove-ventures/horcrux/pkg/proto"
-	proto2 "github.com/strangelove-ventures/horcrux/pkg/proto"
 
 	grpcretry "github.com/grpc-ecosystem/go-grpc-middleware/retry"
 	"github.com/strangelove-ventures/horcrux/pkg/multiresolver"
@@ -51,20 +50,24 @@ func createListener(nodeID string, homedir string) (string, func(), error) {
 		homedir,
 		"127.0.0.1:"+port,
 		500*time.Millisecond,
-		log.NewNopLogger(), localcosign, peers)
+		log.NewNopLogger())
 
 	// Need to set pointers to avoid nil pointers.
 	thresholdvalidator := node.NewThresholdValidator(log.NewNopLogger(), nil, 0, timeDuration, 0, localcosign, remoteCosigners, s)
 	s.SetThresholdValidator(thresholdvalidator)
 
-	transportManager, err := s.Open(peers)
+	transportManager, err := s.Open()
 	if err != nil {
 		fmt.Printf("Error opening transport manager: %v\n", err)
 		return "", nil, err
 	}
 
 	grpcServer := grpc.NewServer()
-	proto.RegisterICosignerGRPCServer(grpcServer, node.NewGRPCServer(localcosign, s))
+
+	server := node.NewGRPCServer(s)
+	proto.RegisterIRaftGRPCServer(grpcServer, server.RaftGRPCServer)
+	proto.RegisterICosignerGRPCServer(grpcServer, server.CosignGRPCServer)
+
 	transportManager.Register(grpcServer)
 
 	go func() {
@@ -115,8 +118,8 @@ func TestMultiResolver(t *testing.T) {
 	ctx, cancelFunc := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancelFunc()
 
-	grpcClient := proto2.NewIRaftGRPCClient(connDNS)
-	_, err = grpcClient.GetLeader(ctx, &proto2.RaftGRPCGetLeaderRequest{})
+	grpcClient := proto.NewIRaftGRPCClient(connDNS)
+	_, err = grpcClient.GetLeader(ctx, &proto.RaftGRPCGetLeaderRequest{})
 	require.NoError(t, err)
 
 	connIP, err := grpc.Dial(targetIP,
@@ -128,7 +131,7 @@ func TestMultiResolver(t *testing.T) {
 	require.NoError(t, err)
 	defer connIP.Close()
 
-	grpcClient = proto2.NewIRaftGRPCClient(connIP)
-	_, err = grpcClient.GetLeader(ctx, &proto2.RaftGRPCGetLeaderRequest{})
+	grpcClient = proto.NewIRaftGRPCClient(connIP)
+	_, err = grpcClient.GetLeader(ctx, &proto.RaftGRPCGetLeaderRequest{})
 	require.NoError(t, err)
 }
