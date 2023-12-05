@@ -28,7 +28,7 @@ const (
 // Test2Of3SignerOneSentry will spin up a chain with one single-node validator and one horcrux validator
 // the horcrux validator will have three pcosigners nodes with a threshold of two, and one sentry node
 func Test2Of3SignerOneSentry(t *testing.T) {
-	testChainSingleNodeAndHorcruxThreshold(t, 2, 3, 2, 1, 1)
+	testChainSingleNodeAndHorcruxThreshold(t, 4, 3, 2, 1, 1)
 }
 
 // Test2Of3SignerTwoSentries will spin up a chain with one single-node validator and one horcrux validator

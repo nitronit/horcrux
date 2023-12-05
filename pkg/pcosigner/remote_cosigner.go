@@ -10,6 +10,7 @@ package pcosigner
 
 import (
 	"context"
+	"fmt"
 	"net/url"
 	"time"
 
@@ -65,31 +66,33 @@ func (cosigner *RemoteCosigner) VerifySignature(_ string, _, _ []byte) bool {
 	return false
 }
 */
-func (cosigner *RemoteCosigner) getGRPCClient() (proto.ICosignerGRPCClient, *grpc.ClientConn, error) {
+// getGRPCClient returns a gRPC client and a connection.
+func (rc *RemoteCosigner) getGRPCClient() (proto.ICosignerGRPCClient, *grpc.ClientConn, error) {
 	var grpcAddress string
-	url, err := url.Parse(cosigner.address)
+	url, err := url.Parse(rc.address)
 	if err != nil {
-		grpcAddress = cosigner.address
+		grpcAddress = rc.address
 	} else {
 		grpcAddress = url.Host
 	}
 	conn, err := grpc.Dial(grpcAddress, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
+		fmt.Printf("Error grpc.Dial: %v, with grpcAddress = %s\n", err, grpcAddress)
 		return nil, nil, err
 	}
 	return proto.NewICosignerGRPCClient(conn), conn, nil
 }
 
 // GetNonces implements the Cosigner interface
-// It uses the gRPC client to request the nonces from the other
-// Its the client side (Stub) of the gRPC
+// It uses the gRPC client to request the nonces from the specific peer cosigner
+// This is the  client side (Stub) of the gRPC
 // TODO: Change name to DealNonces or RequestNonces
-func (cosigner *RemoteCosigner) GetNonces(
+func (rc *RemoteCosigner) GetNonces(
 	chainID string,
 	req types.HRSTKey,
 ) (*CosignNoncesResponse, error) {
 
-	client, conn, err := cosigner.getGRPCClient()
+	client, conn, err := rc.getGRPCClient()
 	if err != nil {
 		return nil, err
 	}
@@ -106,7 +109,7 @@ func (cosigner *RemoteCosigner) GetNonces(
 	if err != nil {
 		return nil, err
 	}
-	// Returns one nonce from each cosigner
+	// Returns nonce from a cosigner
 	return &CosignNoncesResponse{
 		Nonces: CosignerNoncesFromProto(res.GetNonces()),
 	}, nil

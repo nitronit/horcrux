@@ -34,7 +34,9 @@ func NewThresholdSignerSoft(config *RuntimeConfig, id int, chainID string) (*cip
 		pubKey,
 		threshold,
 		total)
-
+	if err != nil {
+		return nil, fmt.Errorf("cipher.NewThresholdSignerSoft error: (%s)", err)
+	}
 	return &s, nil
 }
 
@@ -55,7 +57,7 @@ func (cosign *Cosigner) GetAddress() string {
 
 // GetID returns the ID of the remote cosigner
 // Implements the cosigner interface
-func (cosign *RemoteCosigner) GetID() int {
+func (cosign *Cosigner) GetID() int {
 	return cosign.id
 }
 

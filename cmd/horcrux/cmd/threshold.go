@@ -25,7 +25,7 @@ func NewThresholdValidator(
 
 	thresholdCfg := config.Config.ThresholdModeConfig
 	// NOTE: Shouldnt this be a list of concrete type instead of interface type?
-	remoteCosigners := make([]pcosigner.IRemoteCosigner, 0, len(thresholdCfg.Cosigners)-1)
+	remoteCosigners := make([]pcosigner.IRemoteCosigner, 0, len(thresholdCfg.Cosigners)-1) // list of remote cosigners
 	// peers := make([]pcosigner.ICosigner, 0, len(thresholdCfg.Cosigners)-1)
 
 	var p2pListen string
@@ -43,15 +43,12 @@ func NewThresholdValidator(
 
 	for _, c := range thresholdCfg.Cosigners {
 		if c.ShardID != security.GetID() {
-
-			// remoteCosigners = append(
-			//	remoteCosigners,
-			//	temp,
-			// )
 			remoteCosigners = append(remoteCosigners, pcosigner.NewRemoteCosigner(security.GetID(), c.P2PAddr))
+			logger.Info("Added remote cosigner", "id", c.ShardID, "address", c.P2PAddr)
 		} else {
-			// p2pListen = c.P2PAddr
+			p2pListen = c.P2PAddr
 			cosign = pcosigner.NewCosign(c.ShardID, c.P2PAddr)
+			logger.Info("Created a new cosigner", "id", c.ShardID, "address", c.P2PAddr)
 
 		}
 	}
@@ -92,8 +89,8 @@ func NewThresholdValidator(
 		thresholdCfg.Threshold,
 		grpcTimeout,
 		maxWaitForSameBlockAttempts,
-		localCosigner,
-		remoteCosigners, // remote Cosigners are the peers we are calling remotely
+		localCosigner,   // our "server"
+		remoteCosigners, // remote Cosigners are the peers we are requesting remotely (client to server)
 		raftStore,       // raftStore implements the ILeader interface
 	)
 
