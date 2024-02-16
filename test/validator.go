@@ -14,7 +14,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/bech32"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	"github.com/docker/docker/client"
-	"github.com/strangelove-ventures/horcrux/signer/proto"
+	"github.com/strangelove-ventures/horcrux/proto/strangelove/proto"
+
+	// "github.com/strangelove-ventures/horcrux/src/proto"
 	interchaintest "github.com/strangelove-ventures/interchaintest/v8"
 	"github.com/strangelove-ventures/interchaintest/v8/chain/cosmos"
 	"github.com/strangelove-ventures/interchaintest/v8/ibc"
@@ -52,7 +54,7 @@ const (
 type chainWrapper struct {
 	chain           *cosmos.CosmosChain
 	totalValidators int // total number of validators on chain at genesis
-	totalSentries   int // number of additional sentry nodes
+	totalSentries   int // number of additional sentry cosigner
 	modifyGenesis   func(cc ibc.ChainConfig, b []byte) ([]byte, error)
 	preGenesis      func(*chainWrapper) func(ibc.ChainConfig) error
 }
@@ -189,7 +191,7 @@ func getPrivvalKey(ctx context.Context, node *cosmos.ChainNode) (privval.FilePVK
 	return pvKey, nil
 }
 
-// enablePrivvalListener enables the privval listener on the given sentry nodes.
+// enablePrivvalListener enables the privval listener on the given sentry cosigner.
 func enablePrivvalListener(
 	ctx context.Context,
 	logger *zap.Logger,
@@ -297,7 +299,7 @@ func getLeader(ctx context.Context, cosigner *cosmos.SidecarProcess) (int, error
 	ctx, cancelFunc := context.WithTimeout(ctx, 10*time.Second)
 	defer cancelFunc()
 
-	grpcClient := proto.NewCosignerClient(conn)
+	grpcClient := proto.NewNodeServiceClient(conn)
 
 	res, err := grpcClient.GetLeader(ctx, &proto.GetLeaderRequest{})
 	if err != nil {

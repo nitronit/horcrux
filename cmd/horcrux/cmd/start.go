@@ -4,10 +4,12 @@ import (
 	"fmt"
 	"os"
 
+	cconfig "github.com/strangelove-ventures/horcrux/src/config"
+	"github.com/strangelove-ventures/horcrux/src/connector"
+
 	cometlog "github.com/cometbft/cometbft/libs/log"
 	"github.com/cometbft/cometbft/libs/service"
 	"github.com/spf13/cobra"
-	"github.com/strangelove-ventures/horcrux/signer"
 )
 
 func startCmd() *cobra.Command {
@@ -20,7 +22,7 @@ func startCmd() *cobra.Command {
 			out := cmd.OutOrStdout()
 			logger := cometlog.NewTMLogger(cometlog.NewSyncWriter(out))
 
-			err := signer.RequireNotRunning(logger, config.PidFile)
+			err := RequireNotRunning(logger, config.PidFile)
 			if err != nil {
 				return err
 			}
@@ -42,16 +44,16 @@ func startCmd() *cobra.Command {
 
 			acceptRisk, _ := cmd.Flags().GetBool(flagAcceptRisk)
 
-			var val signer.PrivValidator
-			var services []service.Service
+			var val connector.IPrivValidator
+			var services []service.Service // A list of all services that are running
 
 			switch config.Config.SignMode {
-			case signer.SignModeThreshold:
+			case cconfig.SignModeThreshold:
 				services, val, err = NewThresholdValidator(cmd.Context(), logger)
 				if err != nil {
 					return err
 				}
-			case signer.SignModeSingle:
+			case cconfig.SignModeSingle:
 				val, err = NewSingleSignerValidator(out, acceptRisk)
 				if err != nil {
 					return err
@@ -60,8 +62,9 @@ func startCmd() *cobra.Command {
 				panic(fmt.Errorf("unexpected sign mode: %s", config.Config.SignMode))
 			}
 
+			// Start the service so the Sentry can connecto to our GRPC server
 			if config.Config.GRPCAddr != "" {
-				grpcServer := signer.NewRemoteSignerGRPCServer(logger, val, config.Config.GRPCAddr)
+				grpcServer := connector.NewSentrySignerGRPCServer(logger, val, config.Config.GRPCAddr)
 				services = append(services, grpcServer)
 
 				if err := grpcServer.Start(); err != nil {
@@ -71,12 +74,13 @@ func startCmd() *cobra.Command {
 
 			go EnableDebugAndMetrics(cmd.Context(), out)
 
-			services, err = signer.StartRemoteSigners(services, logger, val, config.Config.Nodes())
+			// "Entrypoint" to start remote signers
+			services, err = connector.StartRemoteSigners(services, logger, val, config.Config.Nodes())
 			if err != nil {
 				return fmt.Errorf("failed to start remote signer(s): %w", err)
 			}
 
-			signer.WaitAndTerminate(logger, services, config.PidFile)
+			WaitAndTerminate(logger, services, config.PidFile)
 
 			return nil
 		},

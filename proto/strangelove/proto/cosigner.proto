@@ -1,0 +1,93 @@
+syntax = "proto3";
+package strangelove.proto;
+
+//option go_package = 	"strangelove/horcrux/proto";
+option go_package = "github.com/strangelove-ventures/horcrux/proto/strangelove/proto";
+
+service Cosigner {
+	rpc SetNoncesAndSign (SetNoncesAndSignRequest) returns (SetNoncesAndSignResponse) {}
+	rpc GetNonces (GetNoncesRequest) returns (GetNoncesResponse) {}
+	rpc Ping(PingRequest) returns (PingResponse) {}
+}
+
+
+message Nonce {
+	int32 sourceID = 1;
+	int32 destinationID = 2;
+	bytes pubKey = 3;
+	bytes share = 4;
+	bytes signature = 5;
+}
+
+message UUIDNonce {
+	bytes uuid = 1;
+	repeated Nonce nonces = 2;
+}
+
+message HRST {
+	int64 height = 1;
+	int64 round = 2;
+	int32 step = 3;
+	int64 timestamp = 4;
+}
+
+message SetNoncesAndSignRequest {
+	bytes uuid = 1;
+	repeated Nonce nonces = 2;
+	HRST hrst = 3;
+	bytes signBytes = 4;
+	string chainID = 5;
+}
+
+message SetNoncesAndSignResponse {
+	bytes noncePublic = 1;
+	int64 timestamp = 2;
+	bytes signature = 3;
+}
+
+message GetNoncesRequest {
+	repeated bytes uuids = 1;
+}
+
+message GetNoncesResponse {
+	repeated UUIDNonce nonces = 1;
+}
+
+message PingRequest {}
+message PingResponse {}
+/*
+message GetLeaderRequest {}
+
+message GetLeaderResponse {
+	int32 leader = 1;
+}
+
+
+message TransferLeadershipRequest {
+ 	string leaderID = 1;
+}
+
+message TransferLeadershipResponse {
+	string leaderID = 1;
+	string leaderAddress = 2;
+}
+
+
+message Block {
+	int64 height = 1;
+	int64 round = 2;
+	int32 step = 3;
+	bytes signBytes = 4;
+	int64 timestamp = 5;
+}
+
+message SignBlockRequest {
+	string chainID = 1;
+	Block block = 2;
+}
+
+message SignBlockResponse {
+	bytes signature = 1;
+	int64 timestamp = 2;
+}
+*/

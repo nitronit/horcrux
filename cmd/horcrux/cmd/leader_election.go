@@ -5,12 +5,15 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/strangelove-ventures/horcrux/src/cosigner/nodesecurity"
+
 	grpcretry "github.com/grpc-ecosystem/go-grpc-middleware/retry"
 	"github.com/spf13/cobra"
 	"github.com/strangelove-ventures/horcrux/client"
-	"github.com/strangelove-ventures/horcrux/signer"
-	"github.com/strangelove-ventures/horcrux/signer/multiresolver"
-	"github.com/strangelove-ventures/horcrux/signer/proto"
+	"github.com/strangelove-ventures/horcrux/proto/strangelove/proto"
+	"github.com/strangelove-ventures/horcrux/src/multiresolver"
+
+	// "github.com/strangelove-ventures/horcrux/src/proto"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
@@ -69,7 +72,7 @@ horcrux elect 2 # elect specific leader`,
 			ctx, cancelFunc := context.WithTimeout(context.Background(), 30*time.Second)
 			defer cancelFunc()
 
-			grpcClient := proto.NewCosignerClient(conn)
+			grpcClient := proto.NewNodeServiceClient(conn)
 			_, err = grpcClient.TransferLeadership(
 				ctx,
 				&proto.TransferLeadershipRequest{LeaderID: leaderID},
@@ -116,14 +119,14 @@ func getLeaderCmd() *cobra.Command {
 					return fmt.Errorf("cosigner encryption keys not found (%s) - (%s): %w", keyFileECIES, keyFileRSA, err)
 				}
 
-				key, err := signer.LoadCosignerRSAKey(keyFileRSA)
+				key, err := nodesecurity.LoadCosignerRSAKey(keyFileRSA)
 				if err != nil {
 					return fmt.Errorf("error reading cosigner key (%s): %w", keyFileRSA, err)
 				}
 
 				id = key.ID
 			} else {
-				key, err := signer.LoadCosignerECIESKey(keyFileECIES)
+				key, err := nodesecurity.LoadCosignerECIESKey(keyFileECIES)
 				if err != nil {
 					return fmt.Errorf("error reading cosigner key (%s): %w", keyFileECIES, err)
 				}
@@ -166,7 +169,7 @@ func getLeaderCmd() *cobra.Command {
 			ctx, cancelFunc := context.WithTimeout(context.Background(), 30*time.Second)
 			defer cancelFunc()
 
-			grpcClient := proto.NewCosignerClient(conn)
+			grpcClient := proto.NewNodeServiceClient(conn)
 
 			res, err := grpcClient.GetLeader(ctx, &proto.GetLeaderRequest{})
 			if err != nil {
